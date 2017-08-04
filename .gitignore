@@ -1,0 +1,13 @@
+node_modules
+dist
+bak
+log
+.sass-cache
+.vscode
+.git-completion.bash
+*.DS_Store
+.temp
+build/bin
+build/output
+build/upload.json
+app/mac.txt
