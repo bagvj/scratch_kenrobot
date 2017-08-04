@@ -541,13 +541,7 @@ function listSerialPort() {
 			return
 		}
 
-		matchBoardNames(ports).then(_ => {
-			log.debug(ports.map(p => `${p.comName}, pid: ${p.productId}, vid: ${p.vendorId}, boardName: ${p.boardName || ""}`).join('\n'))
-			deferred.resolve(ports)
-		}, err => {
-			err && log.error(err)
-			deferred.reject(err)
-		})
+		deferred.resolve(ports)
 	}, err => {
 		err && log.error(err)
 		deferred.reject(err)
