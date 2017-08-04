@@ -259,7 +259,7 @@ gulp.task('pack', ['pack-main', 'pack-public'])
 gulp.task('build', ['clean-dist'], callback => {
 	var platform = args.platform || "win"
 	var branch = args.branch || "release"
-	var feature = args.feature || ""
+	var feature = args.feature || "ardubits"
 	var arch
 	var target
 	var ext
