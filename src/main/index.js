@@ -7,7 +7,7 @@ const crypto = require('crypto')
 
 const util = require('./util')
 const token = require('./token')
-const serialPort = require('./serialPort') //串口
+
 const project = require('./project') //同步
 
 const is = require('electron-is')
@@ -134,16 +134,6 @@ function listenMessages() {
 	listenMessage("request", (url, options, json) => util.request(url, options, json))
 	listenMessage("showItemInFolder", filePath => shell.showItemInFolder(path.normalize(filePath)))
 	listenMessage("openUrl", url => url && shell.openExternal(url))
-
-	listenMessage("listSerialPort", _ => listSerialPort())
-	listenMessage("openSerialPort", (comName, options) => openSerialPort(comName, options))
-	listenMessage("writeSerialPort", (portId, content) => serialPort.writeSerialPort(portId, content))
-	listenMessage("closeSerialPort", portId => serialPort.closeSerialPort(portId))
-	listenMessage("updateSerialPort", (portId, options) => serialPort.updateSerialPort(portId, options))
-	listenMessage("flushSerialPort", portId => serialPort.flushSerialPort(portId))
-	
-	listenMessage("uploadFirmware", (name, options) => uploadFirmware(getFirmwarePath(name), options))
-	listenMessage("uploadFirmware2", (name, comName, options) => uploadFirmware2(getFirmwarePath(name), comName, options))
 	
 	listenMessage("download", (url, options) => download(url, options))
 	listenMessage("installDriver", driverPath => installDriver(driverPath))
@@ -246,7 +236,6 @@ function createWindow() {
 		.on('enter-full-screen', _ => util.postMessage("app:onFullscreenChange", true))
 		.on('leave-full-screen', _ => util.postMessage("app:onFullscreenChange", false))
 
-	mainWindow.webContents.on('devtools-reload-page', _ => serialPort.closeAllSerialPort())
 	mainWindow.webContents.session.on('will-download', onDownload)
 
 	mainWindow.loadURL(baseUrl)
@@ -254,7 +243,6 @@ function createWindow() {
 }
 
 function onAppWillQuit() {
-	serialPort.closeAllSerialPort()
 	util.removeFile(path.join(util.getAppDataPath(), "temp"), true)
 }
 
@@ -503,192 +491,9 @@ function installDriver(driverPath) {
 }
 
 /**
- * 打开串口
- * @param {*} comName 端口路径
- * @param {*} options 
- */
-function openSerialPort(comName, options) {
-	return serialPort.openSerialPort(comName, options, {
-		onError: onSerialPortError,
-		onData: onSerialPortData,
-		onClose: onSerialPortClose,
-	})
-}
-
-function onSerialPortError(portId, err) {
-	util.postMessage("app:onSerialPortError", portId, err)
-}
-
-function onSerialPortData(portId, data) {
-	util.postMessage("app:onSerialPortData", portId, data)
-}
-
-function onSerialPortClose(portId) {
-	util.postMessage("app:onSerialPortClose", portId)
-}
-
-/**
- * 查询串口
- */
-function listSerialPort() {
-	var deferred = Q.defer()
-
-	serialPort.listSerialPort().then(ports => {
-		ports = filterArduinoPorts(ports)
-
-		if(ports.length == 0) {
-			deferred.reject()
-			return
-		}
-
-		deferred.resolve(ports)
-	}, err => {
-		err && log.error(err)
-		deferred.reject(err)
-	})
-
-	return deferred.promise
-}
-
-/**
- * 筛选arduino串口
- * @param {*} ports 串口列表
- */
-function filterArduinoPorts(ports) {
-	var reg = /(COM\d+)|(usb-serial)|(arduino)|(\/dev\/cu\.usbmodem)|(\/dev\/tty\.)|(\/dev\/(ttyUSB|ttyACM|ttyAMA))/
-	return ports.filter(p => reg.test(p.comName))
-}
-
-/**
- * 上传固件
- * @param {*} targetPath 固件路径
- * @param {*} options 选项
- */
-function uploadFirmware(targetPath, options) {
-	var deferred = Q.defer()
-
-	listSerialPort().then(ports => {
-		if(ports.length == 1) {
-			uploadFirmware2(targetPath, ports[0].comName, options).then(result => {
-				deferred.resolve(result)
-			}, err => {
-				deferred.reject(err)
-			}, progress => {
-				deferred.notify(progress)
-			})
-		} else {
-			deferred.reject({
-				status: "SELECT_PORT",
-				ports: ports,
-			})
-		}
-	}, _ => {
-		deferred.reject({
-			status: "NOT_FOUND_PORT"
-		})
-	})
-
-	return deferred.promise
-}
-
-/**
- * 上传固件
- * @param {*} targetPath 固件路径
- * @param {*} comName 串口路径
- * @param {*} options 选项
- */
-function uploadFirmware2(targetPath, comName, options) {
-	var deferred = Q.defer()
-
-	preUploadFirmware(targetPath, comName, options).then(commandPath => {
-		log.debug(`upload firmware: ${targetPath}, ${comName}, command path: ${commandPath}`)
-		var scriptPath = getScriptPath("call")
-		util.spawnCommand(`"${scriptPath}"`, [`"${commandPath}"`], {shell: true}).then(_ => {
-			deferred.resolve()
-		}, err => {
-			err && log.error(err)
-			deferred.reject(err)
-		}, progress => {
-			deferred.notify(progress)
-		})
-	}, err => {
-		err && log.error(err)
-		deferred.reject(err)
-	})
-	
-	return deferred.promise
-}
-
-/**
- * 上传预处理
- * @param {*} targetPath 固件路径
- * @param {*} comName 串口路径
- * @param {*} options 选项
- */
-function preUploadFirmware(targetPath, comName, options) {
-	var deferred = Q.defer()
-
-	log.debug("pre upload firmware")
-	options = Object.assign({}, arduinoOptions.default.upload, options)
-
-	var commandPath = getCommandPath("upload")
-	var command = util.handleQuotes(options.command)
-	command = command.replace(/ARDUINO_PATH/g, getArduinoPath())
-		.replace("ARDUINO_MCU", options.mcu)
-		.replace("ARDUINO_BURNRATE", options.baudrate)
-		.replace("ARDUINO_PROGRAMMER", options.programer)
-		.replace("ARDUINO_COMPORT", comName)
-		.replace("TARGET_PATH", targetPath)
-
-	util.writeFile(commandPath, command).then(_ => {
-		serialPort.resetSerialPort(comName).then(_ => {
-			deferred.resolve(commandPath)
-		}, err => {
-			err && log.error(err)
-			deferred.reject(err)
-		})
-	}, err => {
-		err && log.error(err)
-		deferred.reject(err)
-	})
-
-	return deferred.promise
-}
-
-/**
- * 获取脚本路径
- * @param {*} name 
- * @param {*} type 
- */
-function getScriptPath(name) {
-	var ext = is.windows() ? "bat" : "sh"
-	return path.join(util.getAppResourcePath(), "scripts", `${name}.${ext}`)
-}
-
-/**
- * 获取command路径
- */
-function getCommandPath(name) {
-	return path.join(util.getAppDataPath(), "temp", `${name}.txt`)
-}
-
-/**
- * 获取arduino路径
- */
-function getArduinoPath() {
-	return path.join(util.getAppResourcePath(), `arduino-${util.getPlatform()}`)
-}
-
-/**
  * 获取插件目录
  */
 function getPluginPath(name) {
 	return path.join(util.getAppResourcePath(), "plugins", name, util.getPlatform())
 }
 
-/**
- * 获取固件目录
- */
-function getFirmwarePath(name) {
-	return path.join(util.getAppResourcePath(), "firmwares", name)
-}

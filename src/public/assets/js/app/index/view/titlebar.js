@@ -121,18 +121,10 @@ define(['vendor/jquery', 'app/common/util/emitor', 'app/common/util/util', 'app/
 				util.message("敬请期待");
 				break;
 			case "project-manager":
-				if(kenrobot.viewType == "scratch2" || kenrobot.viewType == "scratch3") {
-					kenrobot.trigger("project", "show");
-				} else {
-					util.message("敬请期待");
-				}
+				kenrobot.trigger("project", "show");
 				break;
 			case "project-sync":
-				if(kenrobot.viewType == "scratch2" || kenrobot.viewType == "scratch3") {
-					kenrobot.trigger("project", "sync");
-				} else {
-					util.message("敬请期待");
-				}
+				kenrobot.trigger("project", "sync");
 				break;
 			case "logout":
 				kenrobot.trigger("user", "logout");

@@ -177,9 +177,6 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 				var info = kenrobot.appInfo;
 				kenrobot.trigger("about", "show", {version: info.version, url: config.url.kenrobot});
 				break;
-			case "show-board-dialog":
-				kenrobot.trigger("board", "show");
-				break;
 		}
 	}
 
