@@ -20,7 +20,7 @@ const minimist = require('minimist') //命令行参数解析
 const hasha = require('hasha') //计算hash
 const express = require('express')
 
-const httpPort = 8778
+const httpPort = 8776
 const baseUrl = `http://localhost:${httpPort}`
 
 var args = minimist(process.argv.slice(1)) //命令行参数
