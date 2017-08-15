@@ -1,7 +1,7 @@
 {
   "main": "main/index.js",
   "name": "KBlock",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "http://www.kenrobot.com",
   "description": "啃萝卜智能硬件平台",
   "author": {
