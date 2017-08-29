@@ -175,7 +175,13 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 				break;
 			case "about-kenrobot":
 				var info = kenrobot.appInfo;
-				kenrobot.trigger("about", "show", {version: info.version, url: config.url.kenrobot});
+				kenrobot.trigger("about", "show", {
+					version: info.version,
+					url: config.url.kenrobot,
+					date: info.date,
+					platform: info.platform,
+					bit: info.bit,
+				});
 				break;
 		}
 	}

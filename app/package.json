@@ -1,19 +1,15 @@
 {
+  "private": true,
   "main": "main/index.js",
   "name": "KBlock",
-  "version": "0.0.2",
-  "homepage": "http://www.kenrobot.com",
-  "description": "啃萝卜智能硬件平台",
+  "version": "0.0.3",
+  "description": "啃萝卜平台",
   "author": {
     "name": "Kenrobot",
     "email": "support@kenrobot.com"
   },
-  "copyright": "©2016 KenRobot",
-  "license": "CC0-1.0",
-  "repository": {
-    "type": "private",
-    "url": "http://www.kenrobot.com"
-  },
+  "copyright": "©2017 KenRobot",
+  "homepage": "http://www.kenrobot.com",
   "dependencies": {
     "7zip-bin": "^2.1.0",
     "electron-debug": "^1.4.0",

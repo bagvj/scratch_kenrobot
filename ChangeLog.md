@@ -13,6 +13,12 @@
 
 - 修复登录后不更新个人信息的bug
 
-####
+#### features
 
 - [scratch 3] 底层和声音部分优化
+
+### v0.0.3
+
+#### features
+
+- [scratch 3] 有更新

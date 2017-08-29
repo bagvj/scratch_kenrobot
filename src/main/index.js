@@ -40,6 +40,7 @@ var arduinoOptions = {
 var config
 
 var mainWindow
+var firstRun
 
 init()
 
@@ -133,7 +134,7 @@ function listenMessages() {
 	listenMessage("showSaveDialog", options => util.showSaveDialog(options))
 	listenMessage("request", (url, options, json) => util.request(url, options, json))
 	listenMessage("showItemInFolder", filePath => shell.showItemInFolder(path.normalize(filePath)))
-	listenMessage("openUrl", url => url && shell.openExternal(url))
+	listenMessage("openUrl", url => util.resolvePromise(url && shell.openExternal(url)))
 	
 	listenMessage("download", (url, options) => download(url, options))
 	listenMessage("installDriver", driverPath => installDriver(driverPath))
@@ -253,6 +254,7 @@ function checkIfFirstRun() {
 
 	config.version = util.getVersion()
 	config.reportInstall = false
+	firstRun = true
 	writeConfig(true)
 }
 
@@ -293,7 +295,7 @@ function checkUpdate(checkUrl) {
 	var deferred = Q.defer()
 
 	var info = util.getAppInfo()
-	var url = `${checkUrl}&name=${info.name}&version=${info.version}&platform=${info.platform}&arch=${info.arch}&features=${info.feature}&ext=${info.ext}`
+	var url = `${checkUrl}&appname=${info.name}&release_version=${info.branch}&version=${info.version}&platform=${info.platform}&arch=${info.arch}&ext=${info.ext}&features=${info.feature}`
 	log.debug(`checkUpdate: ${url}`)
 
 	util.request(url).then(result => {
