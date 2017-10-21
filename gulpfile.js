@@ -128,7 +128,7 @@ gulp.task('pack-assets-js', ['clean-assets-js', 'transform-assets-js', 'copy-ass
 	if(args.release) {
 		gulp.src([ASSETS_SRC + 'js/require.js'])
 			.pipe(gulp.dest(ASSETS_DIST + 'js/'))
-	
+
 		return gulp.src(TEMP + 'js/*.js')
 			.pipe(requirejsOptimize({
 				useStrict: true,
@@ -271,7 +271,7 @@ gulp.task('build', ['clean-dist'], callback => {
 		ext = target
 		targets = builder.Platform.LINUX.createTarget(target, builder.archFromString(arch))
 	} else if(platform == "arm") {
-		arch = builder.Arch.armv7l.toString()
+		arch = args.arch || "armv7l"
 		target = args.target || "dir"
 		ext = target
 		targets = builder.Platform.LINUX.createTarget(target, builder.archFromString(arch))
@@ -291,19 +291,15 @@ gulp.task('build', ['clean-dist'], callback => {
 		branch: branch,
 		feature: feature,
 		ext: ext,
-		bit: arch == "ia32" ? 32 : 64,
+		appBit: arch == "ia32" ? 32 : 64,
 		date: parseInt(new Date().getTime() / 1000),
 	})
 	nconf.save()
-	
+
 	if(args.standalone) {
 		var extraFiles = [
-			`./arduino-${platform}/**/*`,
-			"./scripts/**/*",
-			`!./scripts/**/*.${platform == "win" ? "sh" : "bat"}`,
 			`./plugins/FlashPlayer/${platform}/**/*`,
 			`!./plugins/FlashPlayer/${platform}/**/*${arch == "ia32" ? "64" : "32"}.dll`,
-			"./firmwares/**/*",
 		]
 
 		var dist = path.join(DIST, `${platform}-${arch}-dir`)
@@ -320,7 +316,7 @@ gulp.task('build', ['clean-dist'], callback => {
 
 			return defer.promise
 		}
-		
+
 		var distApp = path.join(dist, 'resources', 'app')
 
 		var taskB = _ => {
@@ -356,7 +352,7 @@ gulp.task('build', ['clean-dist'], callback => {
 
 			return defer.promise
 		}
-		
+
 		var taskC = _ => {
 			var defer = Q.defer()
 
@@ -385,7 +381,7 @@ gulp.task('build', ['clean-dist'], callback => {
 			}
 
 			var packageConfig = require('./app/package')
-			var name = `${packageConfig.name}-${packageConfig.version}-${branch}${feature ? ("-" + feature) : ""}${arch ? ("-" + arch) : ""}-${platform}`
+			var name = `${packageConfig.name}-${packageConfig.version}-${branch}${feature ? ("-" + feature) : ""}${arch ? ("-" + arch) : ""}-${platform}-standalone`
 			var command = `cd "${path.resolve(path.dirname(dist))}" && "${path7za}" a ${name}.7z ${path.basename(dist)}/*`
 			child_process.exec(command, (err, stdout, stderr) => {
 				if(err) {
@@ -410,12 +406,8 @@ gulp.task('build', ['clean-dist'], callback => {
 		})
 	} else {
 		var extraFiles = [
-			`arduino-${platform}`,
-			"scripts",
-			`!scripts/**/*.${platform == "win" ? "sh" : "bat"}`,
 			`plugins/FlashPlayer/${platform}`,
 			`!plugins/FlashPlayer/${platform}/**/*${arch == "ia32" ? "64" : "32"}.dll`,
-			"firmwares",
 		]
 
 		builder.build({
@@ -432,7 +424,7 @@ gulp.task('build', ['clean-dist'], callback => {
 			fs.move(output, file, err => {
 				nconf.clear('buildInfo')
 				nconf.save()
-				
+
 				console.log(file)
 				if(!args.upload) {
 					callback()
@@ -446,7 +438,7 @@ gulp.task('build', ['clean-dist'], callback => {
 					console.error(err1)
 					callback(err1)
 				})
-			})		
+			})
 		}, err => {
 			console.error(err)
 			callback(err)
@@ -487,7 +479,7 @@ gulp.task('upload', _ => {
 		console.log('please spec file use "--file"')
 		return
 	}
-	
+
 	var files = args.file.split(',')
 	var options = args.remotePath ? {remotePath: args.remotePath} : {}
 
