@@ -16,7 +16,7 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 		emitor.on('app', 'check-update', onCheckUpdate)
 			.on('app', 'switch', onSwitch)
 			.on("app", "start", onAppStart)
-			.on("user", "update", onUserUpdate);	
+			.on("user", "update", onUserUpdate);
 
 		kenrobot.listenMessage("app:onFullscreenChange", onFullscreenChange)
 			.listenMessage("app:onSerialPortData", onSerialPortData)
@@ -45,7 +45,7 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 		kenrobot.trigger("app-menu", "load", menu, "index");
 
 		kenrobot.postMessage("app:projectSyncUrl", config.url.projectSync);
-		
+
 		inSync = true;
 		userModel.loadToken().always(_ => {
 			emitor.trigger("user", "update");
@@ -130,7 +130,8 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 				util.message("敬请期待");
 				break;
 			case "setting":
-				kenrobot.trigger("setting", "show");
+				// kenrobot.trigger("setting", "show");
+				util.message("敬请期待");
 				break;
 			case "switch":
 				onSwitch(extra.type);
@@ -203,7 +204,7 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 
 	function onSwitch(type) {
 		kenrobot.reset();
-		
+
 		kenrobot.trigger("app", "will-leave");
 		iframe.src = `${baseUrl}/${type}`;
 		iframe.addEventListener("load", _ => {
