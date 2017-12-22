@@ -2,7 +2,7 @@
   "private": true,
   "main": "main/index.js",
   "name": "KBlock",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "啃萝卜平台",
   "author": {
     "name": "Kenrobot",
