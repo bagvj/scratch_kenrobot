@@ -207,7 +207,7 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 
 		kenrobot.trigger("app", "will-leave");
 		// iframe.src = `${baseUrl}/${type}`;
-		iframe.src = `${baseUrl}/${type}/views/editor/index.html`
+		iframe.src = `${baseUrl}/${type}/views/editor.html`
 
 		iframe.addEventListener("load", _ => {
 			mousetrap = Mousetrap(iframe.contentDocument);

@@ -31,56 +31,56 @@ var Code = {};
 /**
  * Lookup for names of supported languages.  Keys should be in ISO 639 format.
  */
-Code.LANGUAGE_NAME = {
-  'ar': 'العربية',
-  'be-tarask': 'Taraškievica',
-  'br': 'Brezhoneg',
-  'ca': 'Català',
-  'cs': 'Česky',
-  'da': 'Dansk',
-  'de': 'Deutsch',
-  'el': 'Ελληνικά',
-  'en': 'English',
-  'es': 'Español',
-  'et': 'Eesti',
-  'fa': 'فارسی',
-  'fr': 'Français',
-  'he': 'עברית',
-  'hrx': 'Hunsrik',
-  'hu': 'Magyar',
-  'ia': 'Interlingua',
-  'is': 'Íslenska',
-  'it': 'Italiano',
-  'ja': '日本語',
-  'ko': '한국어',
-  'mk': 'Македонски',
-  'ms': 'Bahasa Melayu',
-  'nb': 'Norsk Bokmål',
-  'nl': 'Nederlands, Vlaams',
-  'oc': 'Lenga d\'òc',
-  'pl': 'Polski',
-  'pms': 'Piemontèis',
-  'pt-br': 'Português Brasileiro',
-  'ro': 'Română',
-  'ru': 'Русский',
-  'sc': 'Sardu',
-  'sk': 'Slovenčina',
-  'sr': 'Српски',
-  'sv': 'Svenska',
-  'ta': 'தமிழ்',
-  'th': 'ภาษาไทย',
-  'tlh': 'tlhIngan Hol',
-  'tr': 'Türkçe',
-  'uk': 'Українська',
-  'vi': 'Tiếng Việt',
-  'zh-hans': '简体中文',
-  'zh-hant': '正體中文'
-};
+// Code.LANGUAGE_NAME = {
+//   'ar': 'العربية',
+//   'be-tarask': 'Taraškievica',
+//   'br': 'Brezhoneg',
+//   'ca': 'Català',
+//   'cs': 'Česky',
+//   'da': 'Dansk',
+//   'de': 'Deutsch',
+//   'el': 'Ελληνικά',
+//   'en': 'English',
+//   'es': 'Español',
+//   'et': 'Eesti',
+//   'fa': 'فارسی',
+//   'fr': 'Français',
+//   'he': 'עברית',
+//   'hrx': 'Hunsrik',
+//   'hu': 'Magyar',
+//   'ia': 'Interlingua',
+//   'is': 'Íslenska',
+//   'it': 'Italiano',
+//   'ja': '日本語',
+//   'ko': '한국어',
+//   'mk': 'Македонски',
+//   'ms': 'Bahasa Melayu',
+//   'nb': 'Norsk Bokmål',
+//   'nl': 'Nederlands, Vlaams',
+//   'oc': 'Lenga d\'òc',
+//   'pl': 'Polski',
+//   'pms': 'Piemontèis',
+//   'pt-br': 'Português Brasileiro',
+//   'ro': 'Română',
+//   'ru': 'Русский',
+//   'sc': 'Sardu',
+//   'sk': 'Slovenčina',
+//   'sr': 'Српски',
+//   'sv': 'Svenska',
+//   'ta': 'தமிழ்',
+//   'th': 'ภาษาไทย',
+//   'tlh': 'tlhIngan Hol',
+//   'tr': 'Türkçe',
+//   'uk': 'Українська',
+//   'vi': 'Tiếng Việt',
+//   'zh-hans': '简体中文',
+//   'zh-hant': '正體中文'
+// };
 
 /**
  * List of RTL languages.
  */
-Code.LANGUAGE_RTL = ['ar', 'fa', 'he', 'lki'];
+// Code.LANGUAGE_RTL = ['ar', 'fa', 'he', 'lki'];
 
 Code.PythonHeadContent = "#!/usr/bin/python3 \nimport ctypes \nimport time \nimport lzai \nll = ctypes.cdll.LoadLibrary \nLmst = ll(\"./libpycall.so\") \n\n";
 /**
@@ -96,31 +96,31 @@ Code.workspace = null;
  * @param {string} defaultValue Value to return if paramater not found.
  * @return {string} The parameter value or the default value if not found.
  */
-Code.getStringParamFromUrl = function(name, defaultValue) {
-  var val = location.search.match(new RegExp('[?&]' + name + '=([^&]+)'));
-  return val ? decodeURIComponent(val[1].replace(/\+/g, '%20')) : defaultValue;
-};
+// Code.getStringParamFromUrl = function(name, defaultValue) {
+//   var val = location.search.match(new RegExp('[?&]' + name + '=([^&]+)'));
+//   return val ? decodeURIComponent(val[1].replace(/\+/g, '%20')) : defaultValue;
+// };
 
 /**
  * Get the language of this user from the URL.
  * @return {string} User's language.
  */
-Code.getLang = function() {
-  var lang = Code.getStringParamFromUrl('lang', '');
-  if (Code.LANGUAGE_NAME[lang] === undefined) {
-    // Default to English.
-    lang = 'en';
-  }
-  return 'zh-hans';
-};
+// Code.getLang = function() {
+//   var lang = Code.getStringParamFromUrl('lang', '');
+//   if (Code.LANGUAGE_NAME[lang] === undefined) {
+//     // Default to English.
+//     lang = 'en';
+//   }
+//   return 'zh-hans';
+// };
 
 /**
  * Is the current language (Code.LANG) an RTL language?
  * @return {boolean} True if RTL, false if LTR.
  */
-Code.isRtl = function() {
-  return Code.LANGUAGE_RTL.indexOf(Code.LANG) != -1;
-};
+// Code.isRtl = function() {
+//   return Code.LANGUAGE_RTL.indexOf(Code.LANG) != -1;
+// };
 
 /**
  * Load blocks saved on App Engine Storage or in session/local storage.
@@ -156,32 +156,32 @@ Code.loadBlocks = function(defaultXml) {
 /**
  * Save the blocks and reload with a different language.
  */
-Code.changeLanguage = function() {
-  // Store the blocks for the duration of the reload.
-  // This should be skipped for the index page, which has no blocks and does
-  // not load Blockly.
-  // MSIE 11 does not support sessionStorage on file:// URLs.
-  if (typeof Blockly != 'undefined' && window.sessionStorage) {
-    var xml = Blockly.Xml.workspaceToDom(Code.workspace);
-    var text = Blockly.Xml.domToText(xml);
-    window.sessionStorage.loadOnceBlocks = text;
-  }
+// Code.changeLanguage = function() {
+//   // Store the blocks for the duration of the reload.
+//   // This should be skipped for the index page, which has no blocks and does
+//   // not load Blockly.
+//   // MSIE 11 does not support sessionStorage on file:// URLs.
+//   if (typeof Blockly != 'undefined' && window.sessionStorage) {
+//     var xml = Blockly.Xml.workspaceToDom(Code.workspace);
+//     var text = Blockly.Xml.domToText(xml);
+//     window.sessionStorage.loadOnceBlocks = text;
+//   }
 
-  var languageMenu = document.getElementById('languageMenu');
-  var newLang = encodeURIComponent(
-      languageMenu.options[languageMenu.selectedIndex].value);
-  var search = window.location.search;
-  if (search.length <= 1) {
-    search = '?lang=' + newLang;
-  } else if (search.match(/[?&]lang=[^&]*/)) {
-    search = search.replace(/([?&]lang=)[^&]*/, '$1' + newLang);
-  } else {
-    search = search.replace(/\?/, '?lang=' + newLang + '&');
-  }
+//   var languageMenu = document.getElementById('languageMenu');
+//   var newLang = encodeURIComponent(
+//       languageMenu.options[languageMenu.selectedIndex].value);
+//   var search = window.location.search;
+//   if (search.length <= 1) {
+//     search = '?lang=' + newLang;
+//   } else if (search.match(/[?&]lang=[^&]*/)) {
+//     search = search.replace(/([?&]lang=)[^&]*/, '$1' + newLang);
+//   } else {
+//     search = search.replace(/\?/, '?lang=' + newLang + '&');
+//   }
 
-  window.location = window.location.protocol + '//' +
-      window.location.host + window.location.pathname + search;
-};
+//   window.location = window.location.protocol + '//' +
+//       window.location.host + window.location.pathname + search;
+// };
 
 /**
  * Bind a function to a button's click event.
@@ -200,15 +200,15 @@ Code.bindClick = function(el, func) {
 /**
  * Load the Prettify CSS and JavaScript.
  */
-Code.importPrettify = function() {
-  var link = document.createElement('link');
-  link.setAttribute('rel', 'stylesheet');
-  link.setAttribute('href', 'prettify.css');
-  document.head.appendChild(link);
-  var script = document.createElement('script');
-  script.setAttribute('src', 'prettify.js');
-  document.head.appendChild(script);
-};
+// Code.importPrettify = function() {
+//   var link = document.createElement('link');
+//   link.setAttribute('rel', 'stylesheet');
+//   link.setAttribute('href', 'prettify.css');
+//   document.head.appendChild(link);
+//   var script = document.createElement('script');
+//   script.setAttribute('src', 'prettify.js');
+//   document.head.appendChild(script);
+// };
 
 /**
  * Compute the absolute coordinates and dimensions of an HTML element.
@@ -238,7 +238,8 @@ Code.getBBox_ = function(element) {
  * User's language (e.g. "en").
  * @type {string}
  */
-Code.LANG = Code.getLang();
+// Code.LANG = Code.getLang();
+Code.LANG = "zh-hans";
 
 /**
  * List of tab names.
@@ -246,7 +247,7 @@ Code.LANG = Code.getLang();
  */
 //Code.TABS_ = ['blocks', 'javascript', 'php', 'python', 'dart', 'lua', 'xml'];
 // Code.TABS_ = ['blocks', 'javascript', 'python','xml', 'dart'];
-Code.TABS_ = ['blocks', 'javascript', 'python','xml'];
+Code.TABS_ = ['blocks', 'javascript', 'python'];
 
 Code.selected = 'blocks';
 
@@ -306,22 +307,22 @@ Code.renderContent = function() {
   //var content = document.getElementById('content_' + Code.selected);
   var content = document.getElementById('content_python');
   // Initialize the pane.
-  if (content.id == 'content_xml') {
-    var xmlTextarea = document.getElementById('content_xml');
-    var xmlDom = Blockly.Xml.workspaceToDom(Code.workspace);
-    var xmlText = Blockly.Xml.domToPrettyText(xmlDom);
-    xmlTextarea.value = xmlText;
-    xmlTextarea.focus();
-  } else if (content.id == 'content_javascript') {
-    var code = Blockly.JavaScript.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.innerHTML;
-      code = prettyPrintOne(code, 'js');
-      content.innerHTML = code;
-    }
-  } else if (content.id == 'content_python') {
-    code = Blockly.Python.workspaceToCode(Code.workspace);
+  // if (content.id == 'content_xml') {
+  //   var xmlTextarea = document.getElementById('content_xml');
+  //   var xmlDom = Blockly.Xml.workspaceToDom(Code.workspace);
+  //   var xmlText = Blockly.Xml.domToPrettyText(xmlDom);
+  //   xmlTextarea.value = xmlText;
+  //   xmlTextarea.focus();
+  // } else if (content.id == 'content_javascript') {
+  //   var code = Blockly.JavaScript.workspaceToCode(Code.workspace);
+  //   content.textContent = code;
+  //   if (typeof prettyPrintOne == 'function') {
+  //     code = content.innerHTML;
+  //     code = prettyPrintOne(code, 'js');
+  //     content.innerHTML = code;
+  //   }
+  // } else if (content.id == 'content_python') {
+    var code = Blockly.Python.workspaceToCode(Code.workspace);
     content.textContent = Code.PythonHeadContent  + code;
     //alert(content.textContent);
     //document.getElementById('content_Mypython').innerHTML = content.textContent;
@@ -334,33 +335,32 @@ Code.renderContent = function() {
           document.getElementById('content_Mypython').innerHTML = code;
           //alert(document.getElementById('content_Mypython').textContent);
       }
-
     }
-  } else if (content.id == 'content_php') {
-    code = Blockly.PHP.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.innerHTML;
-      code = prettyPrintOne(code, 'php');
-      content.innerHTML = code;
-    }
-  } else if (content.id == 'content_dart') {
-    code = Blockly.Dart.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.innerHTML;
-      code = prettyPrintOne(code, 'dart');
-      content.innerHTML = code;
-    }
-  } else if (content.id == 'content_lua') {
-    code = Blockly.Lua.workspaceToCode(Code.workspace);
-    content.textContent = code;
-    if (typeof prettyPrintOne == 'function') {
-      code = content.innerHTML;
-      code = prettyPrintOne(code, 'lua');
-      content.innerHTML = code;
-    }
-  }
+  // } else if (content.id == 'content_php') {
+  //   code = Blockly.PHP.workspaceToCode(Code.workspace);
+  //   content.textContent = code;
+  //   if (typeof prettyPrintOne == 'function') {
+  //     code = content.innerHTML;
+  //     code = prettyPrintOne(code, 'php');
+  //     content.innerHTML = code;
+  //   }
+  // } else if (content.id == 'content_dart') {
+  //   code = Blockly.Dart.workspaceToCode(Code.workspace);
+  //   content.textContent = code;
+  //   if (typeof prettyPrintOne == 'function') {
+  //     code = content.innerHTML;
+  //     code = prettyPrintOne(code, 'dart');
+  //     content.innerHTML = code;
+  //   }
+  // } else if (content.id == 'content_lua') {
+  //   code = Blockly.Lua.workspaceToCode(Code.workspace);
+  //   content.textContent = code;
+  //   if (typeof prettyPrintOne == 'function') {
+  //     code = content.innerHTML;
+  //     code = prettyPrintOne(code, 'lua');
+  //     content.innerHTML = code;
+  //   }
+  // }
 };
 
 Code.loop = function()
@@ -375,7 +375,7 @@ Code.loop = function()
 Code.init = function() {
   Code.initLanguage();
 
-  var rtl = Code.isRtl();
+  // var rtl = Code.isRtl();
   var container = document.getElementById('content_area');
   var onresize = function(e) {
     var bBox = Code.getBBox_(container);
@@ -411,8 +411,8 @@ Code.init = function() {
            length: 3,
            colour: '#ccc',
            snap: true},
-       media: '../../media/',
-       rtl: rtl,
+       media: '../media/',
+       // rtl: rtl,
        toolbox: toolboxXml,
        zoom:
            {controls: true,
@@ -457,7 +457,7 @@ Code.init = function() {
   Blockly.svgResize(Code.workspace);
 
   // Lazy-load the syntax-highlighting.
-  window.setTimeout(Code.importPrettify, 1);
+  // window.setTimeout(Code.importPrettify, 1);
   window.setTimeout("Code.loop()",2);
 };
 
@@ -466,35 +466,35 @@ Code.init = function() {
  */
 Code.initLanguage = function() {
   // Set the HTML's language and direction.
-  var rtl = Code.isRtl();
-  document.dir = rtl ? 'rtl' : 'ltr';
-  document.head.parentElement.setAttribute('lang', Code.LANG);
+  // var rtl = Code.isRtl();
+  // document.dir = rtl ? 'rtl' : 'ltr';
+  // document.head.parentElement.setAttribute('lang', Code.LANG);
 
   // Sort languages alphabetically.
-  var languages = [];
-  for (var lang in Code.LANGUAGE_NAME) {
-    languages.push([Code.LANGUAGE_NAME[lang], lang]);
-  }
-  var comp = function(a, b) {
-    // Sort based on first argument ('English', 'Русский', '简体字', etc).
-    if (a[0] > b[0]) return 1;
-    if (a[0] < b[0]) return -1;
-    return 0;
-  };
-  languages.sort(comp);
-  // Populate the language selection menu.
-  var languageMenu = document.getElementById('languageMenu');
-  languageMenu.options.length = 0;
-  for (var i = 0; i < languages.length; i++) {
-    var tuple = languages[i];
-    var lang = tuple[tuple.length - 1];
-    var option = new Option(tuple[0], lang);
-    if (lang == Code.LANG) {
-      option.selected = true;
-    }
-    languageMenu.options.add(option);
-  }
-  languageMenu.addEventListener('change', Code.changeLanguage, true);
+  // var languages = [];
+  // for (var lang in Code.LANGUAGE_NAME) {
+  //   languages.push([Code.LANGUAGE_NAME[lang], lang]);
+  // }
+  // var comp = function(a, b) {
+  //   // Sort based on first argument ('English', 'Русский', '简体字', etc).
+  //   if (a[0] > b[0]) return 1;
+  //   if (a[0] < b[0]) return -1;
+  //   return 0;
+  // };
+  // languages.sort(comp);
+  // // Populate the language selection menu.
+  // var languageMenu = document.getElementById('languageMenu');
+  // languageMenu.options.length = 0;
+  // for (var i = 0; i < languages.length; i++) {
+  //   var tuple = languages[i];
+  //   var lang = tuple[tuple.length - 1];
+  //   var option = new Option(tuple[0], lang);
+  //   if (lang == Code.LANG) {
+  //     option.selected = true;
+  //   }
+  //   languageMenu.options.add(option);
+  // }
+  // languageMenu.addEventListener('change', Code.changeLanguage, true);
 
   // Inject language strings.
   document.title += ' ' + MSG['title'];
@@ -508,18 +508,18 @@ Code.initLanguage = function() {
   document.getElementById('trashButton').title = MSG['trashTooltip'];
 };
 
-Code.WinformXml = "NULL";
+// Code.WinformXml = "NULL";
 
-Code.WinformLoadBlocks = function() {
-	var c = Blockly.JavaScript.workspaceToCode(Code.workspace);
-	//winform.uploadToFish(c);
+// Code.WinformLoadBlocks = function() {
+// 	var c = Blockly.JavaScript.workspaceToCode(Code.workspace);
+// 	//winform.uploadToFish(c);
 
-	    Code.workspace.clear();
-	    if (window.location.hash) {
-	      window.location.hash = '';
-	    }
-	    Code.loadBlocks(Code.WinformXml);
-};
+// 	    Code.workspace.clear();
+// 	    if (window.location.hash) {
+// 	      window.location.hash = '';
+// 	    }
+// 	    Code.loadBlocks(Code.WinformXml);
+// };
 
 /**
  * Execute the user's code.
@@ -532,13 +532,13 @@ Code.runJS = function() {
 	var c = Code.PythonHeadContent + Blockly.Python.workspaceToCode(Code.workspace);
 	if(Code.runJsState == 0)
 	{
-		document.getElementById('runButtonImg').src = "../../media/stop2.jpg";
+		document.getElementById('runButtonImg').src = "../media/stop2.jpg";
 		Code.runJsState = 1;
 		winform.uploadToFish(c);
 	}
 	else
 	{
-		document.getElementById('runButtonImg').src = "../../media/1x1.gif";
+		document.getElementById('runButtonImg').src = "../media/1x1.gif";
 		Code.runJsState = 0;
 		winform.uploadToFish(Code.PythonHeadContent + 'Lmst.StopTheFish()');
 
@@ -575,6 +575,6 @@ Code.discard = function() {
 // Load the Code demo's language strings.
 document.write('<script src="msg/' + Code.LANG + '.js"></script>\n');
 // Load Blockly's language strings.
-document.write('<script src="../../msg/js/' + Code.LANG + '.js"></script>\n');
+document.write('<script src="../msg/js/' + Code.LANG + '.js"></script>\n');
 
 window.addEventListener('load', Code.init);

@@ -1,95 +1,12 @@
 html, body {
-    height: 100%;
-    min-height: 100%;
-    font-family: Arial, Helvetica, sans-serif;
-    margin: 0px;
-    padding: 0px;    
-    border: 0px;
-}
-
-select {
-    margin-right: 15px;
-    margin-top: 3px;
-    font-size: 13px;
-    border-radius: 0;
-    text-align-last: center;
-    -webkit-tap-highlight-color: transparent; /* Fixes weird blue blink on iOS on select. */
-}
-
-input[type=checkbox] {
-    margin-right: 5px;
-    opacity : 1;
+  height: 100%;
 }
 
 body {
-    height: 100%;
-    min-height: 100%;
-}
-
-#usercode {
-    margin: 0px;
-
-    height: 100%;
-    min-height: 70%;
-}
-
-#executionresult {
-    height: 100vh;
-    font-size: 13px;
-}
-
-#editorcontainer {
-		float:left;
-    display: flex;
-    width:60%;
-    min-height: 100%;
-    height: 100%;
-    flex-direction: column;
-
-    -webkit-tap-highlight-color: transparent; /* Fixes weird blue icon on iOS when page loads. */
-}
-
-#menu {
-	width:40%;
-	float:left;
-    min-height: 50px;
-    display: flex;
-    align-items: center;
-    border-width: 1px;
-}
-
-#enableAutoComplete {
-    vertical-align: middle;
-}
-
-select {
-    height: 25px;
-}
-
-#selectLanguageContainer, #selectThemeContainer {
-    text-align:center;
-    margin-left: 3px;
-}
-
-/* For screens with limited width (eg. cellphones on portrait mode). */
-@media only screen and (max-width: 500px) { 
-    #editorOptions, #selectThemeContainer {
-        display: none;
-    }
-
-    #selectLanguageContainer {
-        margin: auto;
-        width: 50%;
-    }
-}
-
-/* For screens with limited height (eg. cellphones on landscape mode). */
-@media only screen and (max-height: 500px) {
-    /* Makes the code div smaller to give more space for the results. */
-    #usercode {
-        height: 55%;
-        min-height: 55%;
-    }
+  background-color: #fff;
+  font-family: sans-serif;
+  margin: 0;
+  overflow: hidden;
 }
 
 .farSide {
@@ -201,6 +118,25 @@ td {
   direction: ltr;
 }
 
+div.content2 {
+  float:left;
+  background-color:#c9c9c9;
+  opacity:0.8;
+  width:40%;
+  height:100%;
+}
+
+pre.content1 {
+  font-size:20px;
+  margin: 0;
+  padding: 1ex;
+  position: absolute;
+  direction: ltr;
+  width:35%;
+  height:90%;
+  overflow: auto;
+}
+
 pre.content {
   border: 1px solid #ccc;
   overflow: scroll;
@@ -234,7 +170,7 @@ button {
 .icon21 {
   height: 21px;
   width: 21px;
-  background-image: url(icons.png);
+  background-image: url(../media/icons.png);
 }
 .trash {
   background-position: 0px 0px;
