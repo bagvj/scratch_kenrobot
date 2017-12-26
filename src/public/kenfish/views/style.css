@@ -9,13 +9,13 @@ body {
   overflow: hidden;
 }
 
-.farSide {
-  text-align: right;
-}
+// .farSide {
+//   text-align: right;
+// }
 
-html[dir="RTL"] .farSide {
-  text-align: left;
-}
+// html[dir="RTL"] .farSide {
+//   text-align: left;
+// }
 
 /* Buttons */
 button {
