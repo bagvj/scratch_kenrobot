@@ -55,7 +55,7 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 			baseUrl = url;
 
 			setTimeout(_ => {
-				onSwitch("scratch3");
+				onSwitch("kenfish");
 
 				//app启动后自动检查更新，并且如果检查失败或者没有更新，不提示
 				setTimeout(_ => {
@@ -206,7 +206,9 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 		kenrobot.reset();
 
 		kenrobot.trigger("app", "will-leave");
-		iframe.src = `${baseUrl}/${type}`;
+		// iframe.src = `${baseUrl}/${type}`;
+		iframe.src = `${baseUrl}/${type}/views/editor/index.html`
+
 		iframe.addEventListener("load", _ => {
 			mousetrap = Mousetrap(iframe.contentDocument);
 		}, false);

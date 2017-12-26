@@ -93,6 +93,20 @@ define(function() {
 			extra: {
 				type: "scratch3"
 			},
+		}, {
+			text: "KenFish Block",
+			action: "switch",
+			cls: "check",
+			extra: {
+				type: "block"
+			},
+		}, {
+			text: "KenFish Editor",
+			action: "switch",
+			cls: "check",
+			extra: {
+				type: "editor"
+			},
 		}]
 	}];
 
