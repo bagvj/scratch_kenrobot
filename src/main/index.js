@@ -88,7 +88,7 @@ function initFlashPlugin() {
 	var version = '26.0.0.131'
 	var plugin = is.windows() ? `pepflashplayer${util.isAppX64() ? "64" : "32"}.dll` : (is.macOS() ? "PepperFlashPlayer.plugin" : "libpepflashplayer.so")
 	plugin = path.join(getPluginPath("FlashPlayer"), plugin)
-	
+
 	log.debug(`initFlashPlugin: ${plugin} version: ${version}`)
 
 	app.commandLine.appendSwitch('ppapi-flash-path', plugin)
@@ -98,7 +98,7 @@ function initFlashPlugin() {
 function initServer() {
 	var httpRoot = path.join(__dirname, "..")
 	var http = express()
-	http.use('/', express.static(path.join(httpRoot, "public")))
+	http.use('/', express.static(path.join(httpRoot, "renderer")))
 	http.listen(httpPort)
 }
 
@@ -135,13 +135,13 @@ function listenMessages() {
 	listenMessage("request", (url, options, json) => util.request(url, options, json))
 	listenMessage("showItemInFolder", filePath => shell.showItemInFolder(path.normalize(filePath)))
 	listenMessage("openUrl", url => util.resolvePromise(url && shell.openExternal(url)))
-	
+
 	listenMessage("download", (url, options) => download(url, options))
 	listenMessage("installDriver", driverPath => installDriver(driverPath))
 
 	listenMessage("checkUpdate", checkUrl => checkUpdate(checkUrl))
 	listenMessage("removeOldVersions", newVersion => removeOldVersions(newVersion))
-	
+
 	listenMessage("setToken", value => token.set(value))
 	listenMessage("saveToken", value => token.save(value))
 	listenMessage("loadToken", key => token.load(key))
@@ -153,7 +153,7 @@ function listenMessages() {
 	listenMessage("projectNewSave", (name, type, data, savePath) => project.newSave(name, type, data, savePath))
 	listenMessage("projectNewSaveAs", (name, type, data) => project.newSaveAs(name, type, data))
 	listenMessage("projectNewOpen", (type, name) => project.newOpen(type, name))
-	
+
 	listenMessage("projectSyncUrl", url => project.setSyncUrl(url))
 	listenMessage("projectSync", _ => project.sync())
 	listenMessage("projectList", type => project.list(type))
@@ -225,7 +225,7 @@ function createWindow() {
 			webSecurity: false,
 		}
 	})
-	
+
 	if(args.fullscreen) {
 		mainWindow.setFullScreen(true)
 	} else if(args.maximize) {
@@ -289,7 +289,7 @@ function installReport() {
 
 /**
  * 检查更新
- * @param {*} checkUrl 
+ * @param {*} checkUrl
  */
 function checkUpdate(checkUrl) {
 	var deferred = Q.defer()
@@ -472,7 +472,7 @@ function download(url, options) {
 
 /**
  * 安装驱动
- * @param {*} driverPath 
+ * @param {*} driverPath
  */
 function installDriver(driverPath) {
 	var deferred = Q.defer()
