@@ -41,7 +41,7 @@ function isX64() {
  * 判断当前系统是否为64位
  */
 function isAppX64() {
-	return is.dev() ? isX64() : PACKAGE.buildInfo.bit == 64
+	return is.dev() ? isX64() : PACKAGE.buildInfo.appBit === 64
 }
 
 /**
@@ -145,7 +145,7 @@ function versionCompare(versionA, versionB) {
 
 /**
  * 发送消息
- * @param {*} name 
+ * @param {*} name
  */
 function postMessage(name, ...args) {
 	log.debug(`postMessage: ${name}, ${args.join(", ")}`)
@@ -182,7 +182,7 @@ function callDefer(deferId, type, ...args) {
 
 /**
  * 处理引号
- * @param {*} p 
+ * @param {*} p
  */
 function handleQuotes(p) {
 	return is.windows() ? p : p.replace(/"/g, "")
@@ -288,7 +288,7 @@ function rejectPromise(result, deferred) {
 
 /**
  * 执行可执行文件
- * @param {*} driverPath 
+ * @param {*} driverPath
  */
 function execFile(exePath) {
 	var deferred = Q.defer()
@@ -393,7 +393,7 @@ function spawnCommand(command, args, options) {
 /**
  * 读取文件
  * @param {*} file 路径
- * @param {*} options 选项 
+ * @param {*} options 选项
  */
 function readFile(file, options, sync) {
 	if(sync) {
@@ -508,7 +508,7 @@ function readJson(file, options) {
  * 写json
  * @param {*} file 路径
  * @param {*} data 数据
- * @param {*} options 选项 
+ * @param {*} options 选项
  */
 function writeJson(file, data, options, sync) {
 	if(sync) {
@@ -581,7 +581,7 @@ function unzip(zipPath, dist, spawn) {
 				match = temp
 				temp = reg.exec(progess.data)
 			} while(temp)
-			
+
 			deferred.notify(parseInt(match[1]))
 		})
 	} else {

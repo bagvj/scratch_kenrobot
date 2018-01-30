@@ -89,8 +89,9 @@ function initFlashPlugin() {
 	var plugin = is.windows() ? `pepflashplayer${util.isAppX64() ? "64" : "32"}.dll` : (is.macOS() ? "PepperFlashPlayer.plugin" : "libpepflashplayer.so")
 	plugin = path.join(getPluginPath("FlashPlayer"), plugin)
 
-	log.debug(`initFlashPlugin: ${plugin} version: ${version}`)
+	log.error(`initFlashPlugin: ${plugin} version: ${version}`)
 
+	// app.commandLine.appendSwitch("--disable-web-security")
 	app.commandLine.appendSwitch('ppapi-flash-path', plugin)
 	app.commandLine.appendSwitch('ppapi-flash-version', version)
 }
