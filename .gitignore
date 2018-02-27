@@ -4,6 +4,7 @@ bak
 log
 .sass-cache
 .vscode
+package-lock.json
 *.DS_Store
 .temp
 build/upload.json
