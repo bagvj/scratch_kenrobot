@@ -67,6 +67,7 @@ function init() {
 		app.quit()
 	}
 
+	util.getPlatform() === "arm" && app.commandLine.appendSwitch("ignore-gpu-blacklist")
 	listenEvents()
 	listenMessages()
 
