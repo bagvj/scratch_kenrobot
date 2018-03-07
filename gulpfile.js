@@ -1,8 +1,8 @@
 /**
  * 引入 gulp及组件
- * npm i --save-dev 7zip-bin asar babel-core babel-preset-es2015 browserify del electron@1.8.10 electron-builder@20.2.0 fs-extra globby gulp gulp-autoprefixer gulp-babel gulp-clean-css gulp-if gulp-minify-html gulp-requirejs-optimize gulp-ruby-sass gulp-sftp gulp-uglify hasha isutf8 minimist nconf q run-sequence vinyl-buffer vinyl-source-stream
+ * npm i --save-dev 7zip-bin asar babel-core babel-preset-es2015 browserify del electron@1.8.2 electron-builder@20.2.0 fs-extra globby gulp gulp-autoprefixer gulp-babel gulp-clean-css gulp-if gulp-minify-html gulp-requirejs-optimize gulp-ruby-sass gulp-sftp gulp-uglify hasha isutf8 minimist nconf q run-sequence vinyl-buffer vinyl-source-stream
  * npm install --save electron-debug electron-is electron-log fs-extra minimist q glob 7zip-bin sudo-prompt hasha iconv-lite node-fetch express jszip
- * npm install --global  gulp node-gyp electron-rebuild electron@1.8.10
+ * npm install --global  gulp node-gyp electron-rebuild electron@1.8.2
  */
 
 const gulp = require('gulp') //基础库
