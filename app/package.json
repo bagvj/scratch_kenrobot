@@ -1,9 +1,9 @@
 {
   "private": true,
   "main": "main/index.js",
-  "name": "KBlock",
+  "name": "kblock",
   "productName": "KBlock",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "buildNumber": 22,
   "description": "啃萝卜平台",
   "companyName": "北京啃萝卜信息技术有限公司",
