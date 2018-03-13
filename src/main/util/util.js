@@ -3,19 +3,20 @@ const child_process = require('child_process')
 const path = require('path')
 const crypto = require('crypto')
 
-const {app, dialog, BrowserWindow} = require('electron')
+const {app, ipcMain, dialog, BrowserWindow} = require('electron')
 const log = require('electron-log')
 const is = require('electron-is')
 
 const Q = require('q')
 const fs = require('fs-extra')
-const glob = require('glob')
+const globby = require('globby')
 const sudo = require('sudo-prompt')
 const iconv = require('iconv-lite')
+const _ = require('lodash')
 const path7za = require('7zip-bin').path7za.replace("app.asar", "app.asar.unpacked")
 const fetch = require('node-fetch')
 
-const PACKAGE = require("../package")
+const PACKAGE = require(is.dev() ? path.resolve('app', 'package.json') : path.resolve(__dirname, '..', 'package.json'))
 
 const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC7Jat1/19NDxOObrFpW8USTia6
@@ -25,24 +26,10 @@ wKB/BwSpp+Py2MTT2wIDAQAB
 -----END PUBLIC KEY-----
 `
 
-is.dev() && app.setName(PACKAGE.name)
+is.dev() && app.setName(PACKAGE.productName)
 
 const defers = {}
 var deferAutoId = 0
-
-/**
- * 判断当前系统是否为64位
- */
-function isX64() {
-	return process.arch === 'x64' || process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432')
-}
-
-/**
- * 判断当前系统是否为64位
- */
-function isAppX64() {
-	return is.dev() ? isX64() : PACKAGE.buildInfo.appBit === 64
-}
 
 /**
  * 获取平台名字
@@ -73,49 +60,95 @@ function getVersion() {
  * 获取系统信息
  */
 function getAppInfo() {
+	var isX64 = process.arch === 'x64' || process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432')
+
 	var info = {
-		bit: isX64() ? 64 : 32,
+		bit: isX64 ? 64 : 32,
 		arch: process.arch,
 		platform: getPlatform(),
 		version: getVersion(),
 		name: app.getName(),
+		buildNumber: PACKAGE.buildNumber,
+		dev: is.dev(),
 	}
 
 	if(is.dev()) {
-		info.ext = path.extname(app.getPath("exe")).replace('.', '')
+		info.ext = path.extname(getAppPath("exe")).replace('.', '')
 		info.branch = "beta"
 		info.feature = ""
 		info.date = stamp()
+		info.appBit = info.bit
 	} else {
 		info.ext = PACKAGE.buildInfo.ext
 		info.branch = PACKAGE.buildInfo.branch
 		info.feature = PACKAGE.buildInfo.feature
 		info.date = PACKAGE.buildInfo.date
+		info.appBit = PACKAGE.buildInfo.appBit
 	}
 
 	return info
 }
 
-/**
- * 获取appData目录
- */
-function getAppDataPath() {
-	return path.join(app.getPath("appData"), app.getName())
+function getAppPath(name, extra) {
+	switch(name) {
+		case "appData":
+			return path.join(app.getPath("appData"), app.getName())
+		case "appResource":
+			return is.dev() ? path.resolve("data") : path.resolve(app.getAppPath(), "..", "..", "data")
+		case "appDocuments":
+			return path.join(app.getPath("documents"), app.getName())
+		case "script":
+			return path.join(getAppPath("appResource"), "scripts", `${extra}.${is.windows() ? "bat" : "sh"}`)
+		case "driver":
+			return path.join(getAppPath("appResource"), "driver")
+		case "plugins":
+			return path.join(getAppPath("appResource"), "plugins")
+		case "command":
+			return path.join(getAppPath("appData"), "temp", `${uuid(6)}`)
+		case "libraries":
+			return path.join(getAppPath("appDocuments"), "libraries")
+		case "packages":
+			return path.join(getAppPath("appDocuments"), "packages")
+		case "arduino":
+			return path.join(getAppPath("appResource"), `arduino-${getPlatform()}`)
+		default:
+			return app.getPath(name)
+	}
 }
 
-/**
- * 获取资源路径
- */
-function getAppResourcePath() {
-	return (!is.windows() && !is.dev()) ? path.resolve(app.getAppPath(), "..", "..") : path.resolve(".")
+function getExpire() {
+	return is.dev() ? false : PACKAGE.buildInfo.expire
 }
 
-function getAppDocumentPath() {
-	return path.join(app.getPath("documents"), app.getName())
-}
-
-function getAppPath(name) {
-	return app.getPath(name)
+function formatDate(date, format) {
+	if (typeof date === "number") {
+		date = new Date(date)
+	} else if(!date) {
+		date = new Date()
+	}
+	var o = {
+		"M+": date.getMonth() + 1,
+		"d+": date.getDate(),
+		"h+": date.getHours() % 12 == 0 ? 12 : date.getHours() % 12,
+		"H+": date.getHours(),
+		"m+": date.getMinutes(),
+		"s+": date.getSeconds(),
+		"q+": Math.floor((date.getMonth() + 3) / 3),
+		"S": date.getMilliseconds()
+	}
+	if (/(y+)/.test(format)) {
+		format = format.replace(RegExp.$1, (date.getFullYear() + "").substr(4 - RegExp.$1.length))
+	}
+	if (/(E+)/.test(format)) {
+		var week = ["日", "一", "二", "三", "四", "五", "六"]
+		format = format.replace(RegExp.$1, ((RegExp.$1.length > 1) ? (RegExp.$1.length > 2 ? "星期" : "周") : "") + week[date.getDay()])
+	}
+	for (var k in o) {
+		if (new RegExp("(" + k + ")").test(format)) {
+			format = format.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)))
+		}
+	}
+	return format
 }
 
 function versionCompare(versionA, versionB) {
@@ -153,6 +186,20 @@ function postMessage(name, ...args) {
 	wins && wins.length && wins[0].webContents.send(name, args)
 }
 
+function listenMessage(name, callback) {
+	var eventName = `app:${name}`
+	ipcMain.on(eventName, (e, deferId, ...args) => {
+		var promise = callback.apply(this, args) || resolvePromise()
+		promise.then(result => {
+			e.sender.send(eventName, deferId, true, result)
+		}, err => {
+			e.sender.send(eventName, deferId, false, err)
+		}, progress => {
+			e.sender.send(eventName, deferId, "notify", progress)
+		})
+	})
+}
+
 function getDefer() {
 	var deferred = Q.defer()
 	var deferId = deferAutoId++
@@ -171,7 +218,7 @@ function callDefer(deferId, type, ...args) {
 	}
 
 	var callback
-	if(type == "notify") {
+	if(type === "notify") {
 		callback = deferred.notify
 	} else {
 		delete defers[deferId]
@@ -218,14 +265,14 @@ function uuid(len, radix) {
 }
 
 function stamp() {
-	return parseInt(new Date().getTime() / 1000)
+	return parseInt(Date.now() / 1000)
 }
 
 function throttle(fn, delay) {
 	var timerId
-	return _ => {
+	return () => {
 		timerId && clearTimeout(timerId)
-		timerId = setTimeout(_ => {
+		timerId = setTimeout(() => {
 			fn()
 			clearTimeout(timerId)
 			timerId = null;
@@ -269,9 +316,7 @@ function rsa_decrypt(encrypted, key) {
 function resolvePromise(result, deferred) {
 	deferred = deferred || Q.defer()
 
-	setTimeout(_ => {
-		deferred.resolve(result)
-	}, 10)
+	setTimeout(() => deferred.resolve(result), 10)
 
 	return deferred.promise
 }
@@ -279,9 +324,7 @@ function resolvePromise(result, deferred) {
 function rejectPromise(result, deferred) {
 	deferred = deferred || Q.defer()
 
-	setTimeout(_ => {
-		deferred.reject(result)
-	}, 10)
+	setTimeout(() => deferred.reject(result), 10)
 
 	return deferred.promise
 }
@@ -290,21 +333,10 @@ function rejectPromise(result, deferred) {
  * 执行可执行文件
  * @param {*} driverPath
  */
-function execFile(exePath) {
-	var deferred = Q.defer()
-
+function execFile(exePath, sudo) {
 	log.debug(`execFile: ${exePath}`)
-	var command
-	if(is.windows()) {
-		command = `start /WAIT ${exePath}`
-	} else {
-		command = `${exePath}`
-	}
-	execCommand(command, null, true).fin(_ => {
-		deferred.resolve()
-	})
-
-	return deferred.promise
+	var command = is.windows() ? `start /WAIT ${exePath}` : `${exePath}`
+	return execCommand(command, null, sudo)
 }
 
 /**
@@ -321,32 +353,36 @@ function execCommand(command, options, useSudo) {
 	log.debug(`execCommand:${command}, options: ${JSON.stringify(options)}, useSudo: ${useSudo}`)
 	if(useSudo) {
 		sudo.exec(command, {name: "kenrobot"}, (err, stdout, stderr) => {
-			stdout = is.windows() ? iconv.decode(stdout || "", 'gbk') : stdout
-			stderr = is.windows() ? iconv.decode(stderr || "", 'gbk') : stderr
+			stdout = stdout || ""
+			stderr = stderr || ""
+			stdout = is.windows() ? iconv.decode(Buffer.from(stdout), 'win1252') : stdout
+			stderr = is.windows() ? iconv.decode(Buffer.from(stderr), 'win1252') : stderr
 			if(err) {
-				log.error(err)
-				stdout && log.error(stdout)
-				stderr && log.error(stderr)
-				deferred.reject(stderr || stdout || err)
+				log.info(err)
+				stdout && log.info(stdout)
+				stderr && log.info(stderr)
+				deferred.reject(err || stderr || stdout)
 				return
 			}
 
-			is.dev() && log.debug(stdout)
+			is.dev() && stdout && log.debug(stdout)
 			deferred.resolve(stdout)
 		})
 	} else {
 		child_process.exec(command, options, (err, stdout, stderr) => {
-			stdout = is.windows() ? iconv.decode(stdout || "", 'gbk') : stdout
-			stderr = is.windows() ? iconv.decode(stderr || "", 'gbk') : stderr
+			stdout = stdout || ""
+			stderr = stderr || ""
+			stdout = is.windows() ? iconv.decode(Buffer.from(stdout), 'win1252') : stdout
+			stderr = is.windows() ? iconv.decode(Buffer.from(stderr), 'win1252') : stderr
 			if(err) {
-				log.error(err)
-				stdout && log.error(stdout)
-				stderr && log.error(stderr)
-				deferred.reject(stderr || stdout || err)
+				log.info(err)
+				stdout && log.info(stdout)
+				stderr && log.info(stderr)
+				deferred.reject(err || stderr || stdout)
 				return
 			}
 
-			is.dev() && log.debug(stdout)
+			is.dev() && stdout && log.debug(stdout)
 			deferred.resolve(stdout)
 		})
 	}
@@ -366,8 +402,8 @@ function spawnCommand(command, args, options) {
 	var stdout = ''
 	var stderr = ''
 	child.stdout.on('data', data => {
-		var str = is.windows() ? iconv.decode(data, 'gbk') : data.toString()
-		is.dev() && log.debug(str)
+		var str = is.windows() ? iconv.decode(data, 'win1252') : data.toString()
+		is.dev() && str && log.debug(str)
 		stdout += str
 		deferred.notify({
 			type: "stdout",
@@ -375,8 +411,8 @@ function spawnCommand(command, args, options) {
 		})
 	})
 	child.stderr.on('data', data => {
-		var str = is.windows() ? iconv.decode(data, 'gbk') : data.toString()
-		is.dev() && log.debug(str)
+		var str = is.windows() ? iconv.decode(data, 'win1252') : data.toString()
+		is.dev() && str && log.debug(str)
 		stderr += str
 		deferred.notify({
 			type: "stderr",
@@ -392,19 +428,19 @@ function spawnCommand(command, args, options) {
 
 /**
  * 读取文件
- * @param {*} file 路径
+ * @param {*} filePath 路径
  * @param {*} options 选项
  */
-function readFile(file, options, sync) {
+function readFile(filePath, options, sync) {
 	if(sync) {
-		return fs.readFileSync(file, options)
+		return fs.readFileSync(filePath, options)
 	} else {
 		var deferred = Q.defer()
 		options = options || "utf8"
 
-		fs.readFile(file, options, (err, data) => {
+		fs.readFile(filePath, options, (err, data) => {
 			if(err) {
-				log.error(err)
+				log.info(err)
 				deferred.reject(err)
 				return
 			}
@@ -418,18 +454,18 @@ function readFile(file, options, sync) {
 
 /**
  * 写文件
- * @param {*} file 路径
+ * @param {*} filePath 路径
  * @param {*} data 数据
  */
-function writeFile(file, data, options, sync) {
+function writeFile(filePath, data, options, sync) {
 	if(sync) {
-		fs.outputFileSync(file, data, options)
+		fs.outputFileSync(filePath, data, options)
 	} else {
 		var deferred = Q.defer()
 
-		fs.outputFile(file, data, options, err => {
+		fs.outputFile(filePath, data, options, err => {
 			if(err) {
-				log.error(err)
+				log.info(err)
 				deferred.reject(err)
 				return
 			}
@@ -441,13 +477,39 @@ function writeFile(file, data, options, sync) {
 	}
 }
 
+/**
+ * 保存文件
+ * @param {*} filePath 路径
+ * @param {*} data 数据
+ */
+function saveFile(filePath, data, options) {
+	var deferred = Q.defer()
+
+	options = options || {}
+	filePath && (options.defaultPath = filePath)
+
+	showSaveDialog(options).then(savePath => {
+		writeFile(savePath, data, options).then(() => {
+			deferred.resolve()
+		}, err => {
+			err && log.info(err)
+			deferred.reject(err)
+		})
+	}, err => {
+		err && log.info(err)
+		deferred.reject(err)
+	})
+
+	return deferred.promise
+}
+
 function moveFile(src, dst, options) {
 	var deferred = Q.defer()
 	options = options || {overwrite: true}
 
 	fs.move(src, dst, options, err => {
 		if(err) {
-			log.error(err)
+			log.info(err)
 			deferred.reject(err)
 			return
 		}
@@ -460,17 +522,17 @@ function moveFile(src, dst, options) {
 
 /**
  * 删除文件
- * @param {*} file 路径
+ * @param {*} filePath 路径
  */
-function removeFile(file, sync) {
+function removeFile(filePath, sync) {
 	if(sync) {
-		fs.removeSync(file)
+		fs.removeSync(filePath)
 	} else {
 		var deferred = Q.defer()
 
-		fs.remove(file, err => {
+		fs.remove(filePath, err => {
 			if(err) {
-				log.error(err)
+				log.info(err)
 				deferred.reject(err)
 				return
 			}
@@ -484,16 +546,16 @@ function removeFile(file, sync) {
 
 /**
  * 读取json
- * @param {*} file 路径
+ * @param {*} filePath 路径
  * @param {*} options 选项
  */
-function readJson(file, options) {
+function readJson(filePath, options) {
 	var deferred = Q.defer()
 	options = options || {}
 
-	fs.readJson(file, options, (err, data) => {
+	fs.readJson(filePath, options, (err, data) => {
 		if(err) {
-			log.error(err)
+			log.info(err)
 			deferred.reject(err)
 			return
 		}
@@ -506,20 +568,20 @@ function readJson(file, options) {
 
 /**
  * 写json
- * @param {*} file 路径
+ * @param {*} filePath 路径
  * @param {*} data 数据
  * @param {*} options 选项
  */
-function writeJson(file, data, options, sync) {
+function writeJson(filePath, data, options, sync) {
 	if(sync) {
-		fs.outputJsonSync(file, data, options)
+		fs.outputJsonSync(filePath, data, options)
 	} else {
 		var deferred = Q.defer()
 		options = options || {}
 
-		fs.outputJson(file, data, options, err => {
+		fs.outputJson(filePath, data, options, err => {
 			if(err) {
-				log.error(err)
+				log.info(err)
 				deferred.reject(err)
 				return
 			}
@@ -539,14 +601,11 @@ function searchFiles(pattern) {
 	var deferred = Q.defer()
 
 	log.debug(`searchFiles: ${pattern}`)
-	glob(pattern, {}, (err, pathList) => {
-		if(err) {
-			log.error(err)
-			deferred.reject(err)
-			return
-		}
-
-		return deferred.resolve(pathList)
+	globby(pattern).then(result => {
+		deferred.resolve(result)
+	}, err => {
+		err && log.info(err)
+		deferred.reject(err)
 	})
 
 	return deferred.promise
@@ -554,20 +613,21 @@ function searchFiles(pattern) {
 
 /**
  * 解压文件
- * @param {*} zipPath 压缩文件路径
+ * @param {*} filePath 压缩文件路径
  * @param {*} dist 解压缩目录
  * @param {*} spawn 是否用spawn, 默认为false
  */
-function unzip(zipPath, dist, spawn) {
+function uncompress(filePath, dist, spawn) {
 	var deferred = Q.defer()
 	var reg = /([\d]+)% \d+ - .*\r?/g
 
-	log.debug(`unzip: ${zipPath} => ${dist}`)
+	log.debug(`uncompress: ${filePath} => ${dist}`)
+
 	if(spawn) {
-		spawnCommand(`"${path7za}"`, ["x", `"${zipPath}"`, "-bsp1", "-y", `-o"${dist}"`], {shell: true}).then(result => {
+		spawnCommand(`"${path7za}"`, ["x", `"${filePath}"`, "-bsp1", "-y", `-o"${dist}"`], {shell: true}).then(result => {
 			deferred.resolve(result)
 		}, err => {
-			err && log.error(err)
+			err && log.info(err)
 			deferred.reject(err)
 		}, progess => {
 			reg.lastIndex = 0
@@ -585,10 +645,10 @@ function unzip(zipPath, dist, spawn) {
 			deferred.notify(parseInt(match[1]))
 		})
 	} else {
-		execCommand(`"${path7za}" x "${zipPath}" -y -o"${dist}"`).then(_ => {
+		execCommand(`"${path7za}" x "${filePath}" -y -o"${dist}"`).then(() => {
 			deferred.resolve()
 		}, err => {
-			err && log.error(err)
+			err && log.info(err)
 			deferred.reject(err)
 		})
 	}
@@ -596,15 +656,17 @@ function unzip(zipPath, dist, spawn) {
 	return deferred.promise
 }
 
-function zip(dir, files, dist, type) {
+function compress(dir, files, dist, type) {
 	var deferred = Q.defer()
 
-	files = files instanceof Array ? files : [files]
+	files = files  ? files : [files]
 	type = type || "7z"
-	execCommand(`cd "${dir}" && "${path7za}" a -t${type} -r ${dist} ${files.join(' ')}`).then(_ => {
+	log.debug(`compress: ${dir}: ${files.length} => ${dist}: ${type}`)
+
+	execCommand(`cd ${is.windows() ? "/d " : ""}${dir} && "${path7za}" a -t${type} -r "${dist}" ${files.join(' ')}`).then(() => {
 		deferred.resolve()
 	}, err => {
-		err && log.error(err)
+		err && log.info(err)
 		deferred.reject(err)
 	})
 
@@ -620,7 +682,7 @@ function showOpenDialog(options, win) {
 
 	options = options || {}
 	options.title = "打开"
-	options.defaultPath = options.defaultPath || app.getPath("documents")
+	options.defaultPath = options.defaultPath || getAppPath("documents")
 	options.buttonLabel = "打开"
 
 	win = win || BrowserWindow.getAllWindows()[0]
@@ -647,18 +709,18 @@ function showSaveDialog(options, win) {
 
 	options = options || {}
 	options.title = "保存"
-	options.defaultPath = options.defaultPath || app.getPath("documents")
+	options.defaultPath = (options.defaultPath && path.isAbsolute(options.defaultPath)) ? options.defaultPath : path.join(getAppPath("documents"), options.defaultPath || "untitled")
 	options.buttonLabel = "保存"
 
 	win = win || BrowserWindow.getAllWindows()[0]
 
-	dialog.showSaveDialog(win, options, file => {
-		if(!file) {
+	dialog.showSaveDialog(win, options, savePath => {
+		if(!savePath) {
 			deferred.reject()
 			return
 		}
 
-		deferred.resolve(file)
+		deferred.resolve(savePath)
 	})
 
 	return deferred.promise
@@ -678,7 +740,6 @@ function request(url, options, json) {
 		delete options.data
 	}
 
-	// log.debug(`request: ${url}, options: ${JSON.stringify(options)}`)
 	fetch(url, options).then(res => {
 		if(res.ok) {
 			return json ? res.json() : res
@@ -690,25 +751,23 @@ function request(url, options, json) {
 	}).then(result => {
 		deferred.resolve(result)
 	}).catch(err => {
-		err && log.error(err)
+		err && log.info(err)
 		deferred.reject(err)
 	})
 
 	return deferred.promise
 }
 
-module.exports.isX64 = isX64
-module.exports.isAppX64 = isAppX64
 module.exports.getPlatform = getPlatform
 module.exports.getVersion = getVersion
 module.exports.getAppInfo = getAppInfo
-module.exports.getAppDataPath = getAppDataPath
-module.exports.getAppResourcePath = getAppResourcePath
-module.exports.getAppDocumentPath = getAppDocumentPath
 module.exports.getAppPath = getAppPath
+module.exports.getExpire = getExpire
 
+module.exports.formatDate = formatDate
 module.exports.versionCompare = versionCompare
 module.exports.postMessage = postMessage
+module.exports.listenMessage = listenMessage
 
 module.exports.getDefer = getDefer
 module.exports.callDefer = callDefer
@@ -731,14 +790,15 @@ module.exports.spawnCommand = spawnCommand
 
 module.exports.readFile = readFile
 module.exports.writeFile = writeFile
+module.exports.saveFile = saveFile
 module.exports.moveFile = moveFile
 module.exports.removeFile = removeFile
 module.exports.readJson = readJson
 module.exports.writeJson = writeJson
 
 module.exports.searchFiles = searchFiles
-module.exports.unzip = unzip
-module.exports.zip = zip
+module.exports.compress = compress
+module.exports.uncompress = uncompress
 
 module.exports.showOpenDialog = showOpenDialog
 module.exports.showSaveDialog = showSaveDialog

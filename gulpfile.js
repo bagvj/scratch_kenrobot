@@ -1,8 +1,9 @@
 /**
  * 引入 gulp及组件
- * npm i --save-dev 7zip-bin asar babel-core babel-preset-es2015 browserify del electron@1.8.2 electron-builder@20.2.0 fs-extra globby gulp gulp-autoprefixer gulp-babel gulp-clean-css gulp-if gulp-minify-html gulp-requirejs-optimize gulp-ruby-sass gulp-sftp gulp-uglify hasha isutf8 minimist nconf q run-sequence vinyl-buffer vinyl-source-stream
- * npm install --save electron-debug electron-is electron-log fs-extra minimist q glob 7zip-bin sudo-prompt hasha iconv-lite node-fetch express jszip
- * npm install --global  gulp node-gyp electron-rebuild electron@1.8.2
+ * npm install --save-dev 7zip-bin asar babel-core babel-preset-es2015 browserify del electron@1.8.2 electron-builder@20.4.1 fs-extra globby gulp gulp-autoprefixer gulp-babel gulp-clean-css gulp-if gulp-minify-html gulp-requirejs-optimize gulp-ruby-sass gulp-sftp gulp-uglify hasha isutf8 minimist nconf q run-sequence vinyl-buffer vinyl-source-stream
+ * npm install --save express 7zip-bin command-line-args electron-debug electron-is electron-log flat-cache fs-extra globby@7 hasha iconv-lite is-online lodash node-fetch q sudo-prompt terminate
+ * npm install --global  gulp node-gyp prebuild-install electron-rebuild electron@1.8.2
+ * ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/
  */
 
 const gulp = require('gulp') //基础库
@@ -14,6 +15,7 @@ const requirejsOptimize = require('gulp-requirejs-optimize') //requirejs打包
 const minifyHtml = require("gulp-minify-html") //html压缩
 const sftp = require('gulp-sftp') //
 const Q = require('q')
+
 const fs = require('fs-extra')
 const globby = require('globby')
 const isutf8 = require('isutf8')
@@ -256,9 +258,8 @@ gulp.task('pack', ['pack-main', 'pack-renderer'])
 /**
  * 用法: gulp build-pack --release --standalone --compress --platform=PLATFORM --arch=ARCH --target=TARGET --branch=BRANCH --feature=FEATURE
  * 示例: gulp build-pack --release --branch=beta
- *       gulp build-pack --release --standalone --platform=arm --compress
+ *       gulp build-pack --release --branch=beta --platform=arm --standalone --compress
  *       gulp build-pack --release --platform=win --arch=x64 --target=nsis --branch=beta
- *       gulp build-pack --release --platform=win --arch=x64 --target=nsis --branch=beta --feature=with-101
  */
 gulp.task('build', ['clean-dist'], callback => {
 	var platform = args.platform || "win"
@@ -303,8 +304,8 @@ gulp.task('build', ['clean-dist'], callback => {
 
 	if(args.standalone) {
 		var extraFiles = [
-			`./plugins/FlashPlayer/${platform}/**/*`,
-			`!./plugins/FlashPlayer/${platform}/**/*${arch == "ia32" ? "64" : "32"}.dll`,
+			`./data/plugins/FlashPlayer/${platform}/**/*`,
+			`!./data/plugins/FlashPlayer/${platform}/**/*${arch == "ia32" ? "64" : "32"}.dll`,
 		]
 
 		var dist = path.join(DIST, `${platform}-${arch}-dir`)
@@ -412,8 +413,8 @@ gulp.task('build', ['clean-dist'], callback => {
 		})
 	} else {
 		var extraFiles = [
-			`plugins/FlashPlayer/${platform}`,
-			`!plugins/FlashPlayer/${platform}/**/*${arch == "ia32" ? "64" : "32"}.dll`,
+			`data/plugins/FlashPlayer/${platform}`,
+			`!data/plugins/FlashPlayer/${platform}/**/*${arch == "ia32" ? "64" : "32"}.dll`,
 		]
 
 		builder.build({

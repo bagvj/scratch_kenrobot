@@ -3,9 +3,8 @@ dist
 bak
 log
 .sass-cache
-.vscode
-package-lock.json
 *.DS_Store
 .temp
+package-lock.json
 build/upload.json
 
