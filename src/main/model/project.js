@@ -24,38 +24,45 @@ function check(projectPath) {
 	return projectPath
 }
 
-function read(filePath) {
+function read(projectPath) {
 	var deferred = Q.defer()
 
-	var projectPath
-	if(check(filePath)) {
-		projectPath = filePath
-	} else {
-		var projectName = path.basename(filePath)
-		projectPath = path.join(filePath, projectName + PROJECT_EXT)
-		if(!fs.existsSync(projectPath)) {
-			projectPath = path.join(filePath, "project.json")
-		}
-		if(!fs.existsSync(projectPath)) {
-			return util.rejectPromise(null, deferred)
-		}
-	}
-
-	util.readJson(projectPath).then(projectInfo => {
-		deferred.resolve({
-			path: path.dirname(projectPath),
-			project_type: projectInfo.project_type || "local",
-			data: projectInfo,
+	var ext = path.extname(projectPath)
+	if(ext === ".sb2") {
+		util.readFile(projectPath, "base64").then(result => {
+			deferred.resolve({
+				type: "scratch2",
+				project_name: path.basename(projectPath, path.extname(projectPath)),
+				path: projectPath,
+				data: result
+			})
+		}, err => {
+			err && log.error(err)
+			deferred.reject(err)
 		})
-	}, err => {
-		err && log.info(err)
-		deferred.reject(err)
-	})
+	} else {
+		util.readJson(projectPath).then(result => {
+			if(ext === PROJECT_EXT) {
+				result.path = projectPath
+				deferred.resolve(result)
+			} else {
+				deferred.resolve({
+					type: "scratch3",
+					project_name: path.basename(projectPath, path.extname(projectPath)),
+					path: projectPath,
+					data: result
+				})
+			}
+		}, err => {
+			err && log.info(err)
+			deferred.reject(err)
+		})
+	}
 
 	return deferred.promise
 }
 
-function open(name) {
+function open(type, name) {
 	var deferred = Q.defer()
 
 	var doOpen = projectPath => {
@@ -76,9 +83,11 @@ function open(name) {
 
 		return deferred.promise
 	} else {
-		var options = {}
-		options.defaultPath = Token.getUser() ? getProjectsDir() : util.getAppPath("documents")
-		options.properties = ["openDirectory"]
+		var options = {
+			defaultPath: Token.getUser() ? getProjectsDir() : util.getAppPath("documents"),
+			properties: ["openFile"],
+			filters: getFilters(type),
+		}
 
 		util.showOpenDialog(options).then(openPath => {
 			doOpen(openPath)
@@ -91,7 +100,7 @@ function open(name) {
 	}
 }
 
-function save(projectName, projectInfo, savePath) {
+function save(name, data, type, savePath) {
 	var deferred = Q.defer()
 
 	if(!Token.getUser()) {
@@ -99,23 +108,18 @@ function save(projectName, projectInfo, savePath) {
 		if(savePath && savePath.startsWith(prefix)) {
 			savePath = null
 		}
-		return saveAs(projectName, projectInfo, false, savePath)
+		return saveAs(name, data, type, savePath)
 	}
 
-	savePath = path.join(getProjectsDir(), projectName)
-	doSave(savePath, projectName, projectInfo, "cloud").then(() => {
-		updateLocalItem(projectName).then(() => {
-			throttleSync()
-			deferred.resolve({
-				project_name: projectInfo.project_name,
-				project_type: projectInfo.project_type,
-				updated_at: projectInfo.updated_at,
-				path: savePath,
-			})
-		}, err => {
-			err && log.info(err)
-			deferred.reject(err)
-		})
+	savePath = path.join(getProjectsDir(), name + PROJECT_EXT)
+	doSave(savePath, name, data, type, "cloud").then(result => {
+		// updateLocalItem(name).then(() => {
+		// 	throttleSync()
+			deferred.resolve(result)
+		// }, err => {
+		// 	err && log.info(err)
+		// 	deferred.reject(err)
+		// })
 	}, err => {
 		err && log.info(err)
 		deferred.reject(err)
@@ -124,31 +128,25 @@ function save(projectName, projectInfo, savePath) {
 	return deferred.promise
 }
 
-function saveAs(projectName, projectInfo, isTemp, savePath) {
+function saveAs(name, data, type, savePath) {
 	var deferred = Q.defer()
 
 	var _doSave = (_savePath, _name) => {
-		doSave(_savePath, _name, projectInfo).then(() => {
-			deferred.resolve({
-				project_name: projectInfo.project_name,
-				project_type: projectInfo.project_type,
-				updated_at: projectInfo.updated_at,
-				path: _savePath,
-			})
+		doSave(_savePath, _name, data, type, "local").then(result => {
+			deferred.resolve(result)
 		}, err => {
 			err && log.info(err)
 			deferred.reject(err)
 		})
 	}
 
-	if(isTemp) {
-		savePath = path.join(util.getAppPath("temp"), "build", `sketch_${util.stamp()}`)
-		_doSave(savePath, path.basename(savePath))
-	} else if(savePath) {
-		_doSave(path.join(path.dirname(savePath), projectName), projectName)
+	if(savePath) {
+		_doSave(savePath, name)
 	} else {
-		util.showSaveDialog({defaultPath: getDefaultName()}).then(savePath => {
-			_doSave(savePath, path.basename(savePath))
+		util.showSaveDialog({
+			filters: getFilters(type),
+		}).then(savePath => {
+			_doSave(savePath, path.basename(savePath, path.extname(savePath)))
 		}, err => {
 			err && log.info(err)
 			deferred.reject(err)
@@ -360,19 +358,39 @@ function compress(projectsDir, name) {
 	return deferred.promise
 }
 
-function doSave(savePath, projectName, projectInfo, projectType) {
-	projectInfo.project_name = projectName
-	projectInfo.project_type = projectType || "local"
-	projectInfo.updated_at = new Date()
+function doSave(savePath, name, data, type, projectType) {
+	var deferred = Q.defer()
 
-	var projectPath = path.join(savePath, projectName + PROJECT_EXT)
-	log.debug(`project save: ${projectPath}`)
+	var projectInfo = {
+		type: type,
+		project_name: name,
+		project_type: projectType || "local",
+		updated_at: util.stamp(),
+		data: data,
+	}
 
-	return Q.all([
-		util.writeJson(projectPath, projectInfo),
-		util.removeFile(path.join(savePath, `${projectName}.ino`)),
-		util.removeFile(path.join(savePath, "project.json"))
-	])
+	log.debug(`project save: ${savePath}`)
+
+	var ext = path.extname(savePath)
+	if(ext === ".sb2") {
+		util.writeFile(savePath, new Buffer(data, "base64")).then(() => {
+			projectInfo.path = savePath
+			deferred.resolve(projectInfo)
+		}, err => {
+			err && log.info(err)
+			deferred.reject(err)
+		})
+	} else {
+		util.writeJson(savePath, path.extname(savePath) === PROJECT_EXT ? projectInfo : data).then(() => {
+			projectInfo.path = savePath
+			deferred.resolve(projectInfo)
+		}, err => {
+			err && log.info(err)
+			deferred.reject(err)
+		})
+	}
+
+	return deferred.promise
 }
 
 function doSync(remoteList, localList) {
@@ -632,18 +650,11 @@ function getUserSpec(id, index) {
 	return hasha(`${id}`, {algorithm: "md5"}).substring(index * 8, (index + 1) * 8)
 }
 
-function getSuffix() {
-	suffix++
-	return String.fromCharCode(suffix <= 122 ? suffix : (suffix = 97))
-}
-
-function getDefaultName() {
-	var date = new Date()
-	var month = months[date.getMonth()]
-	var day = (100 + date.getDate()).toString().substring(1)
-	var suffix = getSuffix()
-
-	return `sketch_${month}${day}${suffix}`
+function getFilters(type) {
+	return [
+		{name: 'KBlock(*.kbl)', extensions: ['kbl']},
+		type === "scratch2" ? {name: 'Scratch 2(*.sb2)', extensions: ['sb2']} : {name: 'Scratch 3(*.json)', extensions: ['json']}
+	]
 }
 
 module.exports.check = check

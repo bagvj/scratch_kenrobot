@@ -15,7 +15,11 @@
 
 	.x-dialog-close {
 		top: 11px;
+		color: #999;
 
+		&:hover {
+			color: #666;
+		}
 	}
 
 	.x-dialog-content {
@@ -101,7 +105,7 @@
 				}
 			}
 
-			.tab-ide {
+			.tab-editor {
 				padding: 30px;
 			}
 		}

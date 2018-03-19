@@ -33,9 +33,36 @@
     right: 0;
     padding: 30px;
 
-    &.info {
+    &.confirm-skip {
         .x-confirm-btns {
+            justify-content: space-around;
+        }
+    }
+
+    &.confirm-normal {
+        .x-confirm-btns {
+            justify-content: flex-start;
+            flex-direction: row-reverse;
+
+            .confirm {
+                margin-left: 24px;
+            }
+
+            .skip {
+                display: none;
+            }
+        }
+    }
+
+    &.confirm-ok {
+        .x-confirm-btns {
+            justify-content: center;
+
             .cancel {
+                display: none;
+            }
+
+            .skip {
                 display: none;
             }
         }
@@ -62,7 +89,7 @@
     .x-confirm-title {
         font-size: 18px;
         line-height: 18px;
-        color: #666; 
+        color: #666;
     }
 
     .x-confirm-content {
@@ -74,29 +101,15 @@
     }
 
     .x-confirm-btns {
-        .cancel {
-            float: right;
-            background-color: #ddd;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            width: 80px;
-            height: 36px;
-            color: #666;
-            font-size: 14px;
-            line-height: 36px;
-
-            &:hover {
-                background-color: #ccc;
-            }
-        }
+        display: flex;
 
         .confirm {
-            margin-left: 18px;
-            float: right;
+            padding-left: 16px;
+            padding-right: 16px;
             background-color: #20a0ff;
             border: 1px solid #0088ff;
             border-radius: 3px;
-            width: 80px;
+            min-width: 80px;
             height: 36px;
             font-size: 14px;
             color: white;
@@ -104,6 +117,23 @@
 
             &:hover {
                 background-color: #0088ff;
+            }
+        }
+
+        .cancel, .skip {
+            padding-left: 16px;
+            padding-right: 16px;
+            background-color: #ddd;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            min-width: 80px;
+            height: 36px;
+            color: #666;
+            font-size: 14px;
+            line-height: 36px;
+
+            &:hover {
+                background-color: #ccc;
             }
         }
     }

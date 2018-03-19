@@ -25,7 +25,7 @@ define(['vendor/jquery'], function() {
 		var html = messageConfig.template.replace(/\{type\}/g, type).replace(/\{text\}/g, text).replace(/\{title\}/g, title)
 		var messageDiv = $(html).appendTo(messageLayer);
 		messages.push(messageDiv);
-		
+
 		$('.x-message-close', messageDiv).on('click', function() {
 			onMessageHide(messageDiv);
 		});
@@ -44,6 +44,18 @@ define(['vendor/jquery'], function() {
 		messageDiv.dequeue("stay");
 	}
 
+	function error(text, title) {
+		message({text: text, title: title, type: "error"});
+	}
+
+	function warn(text, title) {
+		message({text: text, title: title, type: "warning"});
+	}
+
+	function success(text, title) {
+		message({text: text, title: title, type: "success"});
+	}
+
 	function onMessageHide(messageDiv) {
 		messages.splice(messages.indexOf(messageDiv), 1);
 		messageDiv.remove();
@@ -55,27 +67,29 @@ define(['vendor/jquery'], function() {
 	}
 
 	var confirmConfig = {
-		titles: {
-			"confirm": "提示",
-			"warning": "提示",
-		},
-		template: '<div class="x-confirm {type}"><i class="x-confirm-close kenrobot ken-close"></i><div class="x-confirm-title">{title}</div><div class="x-confirm-content">{text}</div><div class="x-confirm-btns clearfix"><input class="confirm" type="button" value="{confirmLabel}" /><input class="cancel" type="button" value="{cancelLabel}" /></div></div>',
-		cancelLabel: "取消",
+		title: "提示",
+		template: '<div class="x-confirm confirm-{type}"><i class="x-confirm-close kenrobot ken-close"></i><div class="x-confirm-title">{title}</div><div class="x-confirm-content">{text}</div><div class="x-confirm-btns clearfix"><input class="confirm" type="button" value="{confirmLabel}" /><input class="skip" type="button" value="{skipLabel}" /><input class="cancel" type="button" value="{cancelLabel}" /></div></div>',
 		confirmLabel: "确认",
+		skipLabel: "跳过",
+		cancelLabel: "取消",
 	}
 
 	function confirm(args) {
 		args = typeof args == "string" ? {text: args} : args;
 
 		var text = args.text;
-		var type = args.type || "confirm";
-		var title = args.title || confirmConfig.titles[type];
-		var cancelLabel = args.cancelLabel || confirmConfig.cancelLabel;
-		var confirmLabel = args.confirmLabel || confirmConfig.confirmLabel;
-		var onCancel = args.onCancel;
-		var onConfirm = args.onConfirm;
+		var type = args.type || "normal";
+		var title = args.title || confirmConfig.title;
 
-		var html = confirmConfig.template.replace(/\{type\}/g, type).replace(/\{title\}/g, title).replace(/\{text\}/, text).replace(/\{cancelLabel\}/, cancelLabel).replace(/\{confirmLabel\}/, confirmLabel);
+		var confirmLabel = args.confirmLabel || confirmConfig.confirmLabel;
+		var skipLabel = args.skipLabel || confirmConfig.skipLabel;
+		var cancelLabel = args.cancelLabel || confirmConfig.cancelLabel;
+
+		var onConfirm = args.onConfirm;
+		var onSkip = args.onSkip;
+		var onCancel = args.onCancel;
+
+		var html = confirmConfig.template.replace(/\{type\}/g, type).replace(/\{title\}/g, title).replace(/\{text\}/, text).replace(/\{confirmLabel\}/, confirmLabel).replace(/\{skipLabel\}/, skipLabel).replace(/\{cancelLabel\}/, cancelLabel);
 
 		var dialogLayer = $('.dialog-layer', top.document).addClass("active");
 		var confirmDiv = $(html).appendTo(dialogLayer);
@@ -91,7 +105,7 @@ define(['vendor/jquery'], function() {
 			confirmDiv.dequeue("fadeOut");
 		};
 
-		$('.x-confirm-close').on('click', function() {
+		$('.x-confirm-close', confirmDiv).on('click', function() {
 			doClose(onCancel, true);
 		});
 
@@ -101,6 +115,10 @@ define(['vendor/jquery'], function() {
 
 		$('.x-confirm-btns .confirm', confirmDiv).on('click', function() {
 			doClose(onConfirm);
+		});
+
+		$('.x-confirm-btns .skip', confirmDiv).on('click', function() {
+			doClose(onSkip);
 		});
 
 		mask(confirmDiv, true);
@@ -176,34 +194,35 @@ define(['vendor/jquery'], function() {
 		return dialogWin;
 	}
 
-	var maskConfig = {
-		stack: [],
-		index: -1,
-	}
-
 	function mask(dialog, show) {
-		var dialogLayer = $(".dialog-layer");
+		var $ = top.window.$;
+		var dialogLayer = $(".dialog-layer", top.document);
 		var dialogMask = dialogLayer.find("> .x-dialog-mask");
 
-		var stack = maskConfig.stack;
-		var index = maskConfig.index;
+		var stack = dialogLayer.data("stack") || [];
+		var index = dialogLayer.data("index");
+		index = index !== undefined ? index : -1;
+
 		if(show) {
 			dialogMask.css("z-index", index + 1);
 			dialog.css("z-index", index + 2);
 			stack.push(dialog);
-			maskConfig.index = index + 2;
+			index = index + 2;
 		} else {
 			stack.splice(stack.indexOf(dialog), 1);
 			if(parseInt(dialog.css("z-index")) == index) {
 				if(stack.length > 0) {
 					var topDialog = stack[stack.length - 1];
-					maskConfig.index = parseInt(topDialog.css("z-index"));
-					dialogMask.css("z-index", maskConfig.index - 1);
+					index = parseInt(topDialog.css("z-index"));
+					dialogMask.css("z-index", index - 1);
 				} else {
-					maskConfig.index = -1;
+					index = -1;
 				}
 			}
 		}
+
+		dialogLayer.data("stack", stack);
+		dialogLayer.data("index", index);
 	}
 
 	function toggleActive(target, collapseMode, cls) {
@@ -234,11 +253,11 @@ define(['vendor/jquery'], function() {
 	 * 月(M)、日(d)、12小时(h)、24小时(H)、分(m)、秒(s)、季度(q)可以用1-2个占位符
 	 * 年(y)可以用1-4个占位符，毫秒(S)只能用1个占位符(是1-3位的数字)、周(E)可以用1-3个占位符
 	 * eg:
-	 * formatDate(date, "yyyy-MM-dd hh:mm:ss.S")==> 2006-07-02 08:09:04.423      
-	 * formatDate(date, "yyyy-MM-dd E HH:mm:ss") ==> 2009-03-10 二 20:09:04      
-	 * formatDate(date, "yyyy-MM-dd EE hh:mm:ss") ==> 2009-03-10 周二 08:09:04      
-	 * formatDate(date, "yyyy-MM-dd EEE hh:mm:ss") ==> 2009-03-10 星期二 08:09:04      
-	 * formatDate(date, "yyyy-M-d h:m:s.S") ==> 2006-7-2 8:9:4.18      
+	 * formatDate(date, "yyyy-MM-dd hh:mm:ss.S")==> 2006-07-02 08:09:04.423
+	 * formatDate(date, "yyyy-MM-dd E HH:mm:ss") ==> 2009-03-10 二 20:09:04
+	 * formatDate(date, "yyyy-MM-dd EE hh:mm:ss") ==> 2009-03-10 周二 08:09:04
+	 * formatDate(date, "yyyy-MM-dd EEE hh:mm:ss") ==> 2009-03-10 星期二 08:09:04
+	 * formatDate(date, "yyyy-M-d h:m:s.S") ==> 2006-7-2 8:9:4.18
 	 */
 	function formatDate(date, format) {
 		if (typeof date == "number") {
@@ -300,9 +319,9 @@ define(['vendor/jquery'], function() {
 
 	function throttle(fn, delay) {
 		var timerId;
-		return _ => {
+		return () => {
 			timerId && clearTimeout(timerId);
-			timerId = setTimeout(_ => {
+			timerId = setTimeout(() => {
 				fn();
 				clearTimeout(timerId);
 				timerId = null;
@@ -310,13 +329,42 @@ define(['vendor/jquery'], function() {
 		}
 	}
 
+	function versionCompare(versionA, versionB) {
+		var reg = /(\d+).(\d+).(\d+)/;
+		var matchA = reg.exec(versionA);
+		var matchB = reg.exec(versionB);
+
+		var versionsA = [
+			parseInt(matchA[1]),
+			parseInt(matchA[2]),
+			parseInt(matchA[3]),
+		];
+		var versionsB = [
+			parseInt(matchB[1]),
+			parseInt(matchB[2]),
+			parseInt(matchB[3]),
+		];
+
+		for(var i = 0; i <= 2; i++) {
+			if(versionsA[i] != versionsB[i]) {
+				return versionsA[i] > versionsB[i] ? 1 : -1;
+			}
+		}
+
+		return 0;
+	}
+
 	return {
 		message: message,
+		error: error,
+		warn: warn,
+		success: success,
 		confirm: confirm,
 		dialog: dialog,
 		toggleActive: toggleActive,
 		formatDate: formatDate,
 		uuid: uuid,
 		throttle: throttle,
+		versionCompare: versionCompare,
 	}
 });

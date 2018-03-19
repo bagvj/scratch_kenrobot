@@ -23,9 +23,7 @@ define(['vendor/jquery', 'app/common/util/util', 'app/common/util/emitor'], func
 	}
 
 	function onConfirm() {
-		setTimeout(_ => {
-			kenrobot.trigger("login", "show");
-		}, 400);
+		setTimeout(() => kenrobot.trigger("login", "show"), 400);
 	}
 
 	return {

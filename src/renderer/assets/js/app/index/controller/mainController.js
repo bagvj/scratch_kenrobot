@@ -1,4 +1,4 @@
-define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/util', 'app/common/util/emitor', 'app/common/config/config', '../config/menu', '../model/userModel'], function($1, pace, Mousetrap, util, emitor, config, menu, userModel) {
+define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/util', 'app/common/util/emitor', '../config/menu'], function($1, pace, Mousetrap, util, emitor, menu) {
 
 	var iframe;
 	var mousetrap;
@@ -7,8 +7,6 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 	var inSync;
 
 	function init() {
-		kenrobot.getUserInfo = userModel.getUserInfo;
-
 		$(window).on('contextmenu', onContextMenu).on('click', onWindowClick).on('resize', onWindowResize);
 
 		iframe = document.getElementById("content-frame");
@@ -44,21 +42,21 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 	function onAppStart() {
 		kenrobot.trigger("app-menu", "load", menu, "index");
 
-		kenrobot.postMessage("app:projectSyncUrl", config.url.projectSync);
-
 		inSync = true;
-		userModel.loadToken().always(_ => {
+		kenrobot.postMessage("app:loadToken").then(result => {
+			kenrobot.user = result
+		}).fin(() => {
 			emitor.trigger("user", "update");
 		});
 
 		kenrobot.postMessage("app:getBaseUrl").then(url => {
 			baseUrl = url;
 
-			setTimeout(_ => {
-				onSwitch("scratch2");
+			setTimeout(() => {
+				onSwitch("scratch3");
 
 				//app启动后自动检查更新，并且如果检查失败或者没有更新，不提示
-				setTimeout(_ => {
+				setTimeout(() => {
 					onCheckUpdate(false);
 
 					inSync = false;
@@ -84,38 +82,35 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 	}
 
 	function onUserLogout() {
-		userModel.logout().then(_ => {
+		kenrobot.postMessage("app:logout").then(() => {
 			util.message("退出成功");
-		}).always(_ => {
+		}).fin(() => {
+			kenrobot.user = null;
 			emitor.trigger("user", "update");
 		});
 	}
 
 	function onUserUpdate() {
-		kenrobot.getUserInfo() && setTimeout(_ => onProjectSync(), 2000);
+		kenrobot.user && setTimeout(() => onProjectSync(), 2000);
 	}
 
 	function onProjectSync() {
-		if(kenrobot.viewType != "scratch2" && kenrobot.viewType != "scratch3") {
-			return;
-		}
+		// if(inSync || !kenrobot.user) {
+		// 	return;
+		// }
 
-		if(inSync || !kenrobot.getUserInfo()) {
-			return;
-		}
-
-		inSync = true;
-		util.message("项目开始同步");
-		kenrobot.postMessage("app:projectSync").then(_ => {
-			inSync = false;
-			util.message("项目同步成功");
-		}, err => {
-			inSync = false;
-			util.message({
-				text: "项目同步失败",
-				type: "error",
-			});
-		});
+		// inSync = true;
+		// // util.message("项目开始同步");
+		// kenrobot.postMessage("app:projectSync").then(() => {
+		// 	inSync = false;
+		// 	util.message("项目同步成功");
+		// }, err => {
+		// 	inSync = false;
+		// 	util.message({
+		// 		text: "项目同步失败",
+		// 		type: "error",
+		// 	});
+		// });
 	}
 
 	function onMenuAction(action, extra) {
@@ -136,84 +131,64 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 			case "switch":
 				onSwitch(extra.type);
 				break;
-			case "download-arduino-driver":
-				var info = kenrobot.appInfo;
-				if (info.platform != "win") {
-					util.message("您的系统是" + info.platform + ", 不需要安装驱动");
-					return;
-				}
-				var bit = info.bit == 64 ? "64" : "86";
-				var checksum = config.arduinoDriver.checksum[bit]
-				kenrobot.postMessage("app:download", config.url.arduinoDriver.replace("{BIT}", bit), {checksum: checksum}).then(result => {
-					util.confirm({
-						text: "驱动下载成功，是否安装?",
-						onConfirm: () => {
-							kenrobot.postMessage("app:installDriver", result.path).then(_ => {
-								util.message("驱动安装成功");
-							}, err => {
-								util.message({
-									text: "驱动安装失败",
-									type: "error"
-								});
-							});
-						}
-					});
-				}, err => {
-					util.message("驱动下载失败");
-				});
-				break;
 			case "check-update":
 				onCheckUpdate();
 				break;
 			case "visit-kenrobot":
-				kenrobot.postMessage("app:openUrl", config.url.kenrobot);
+				kenrobot.postMessage("app:openUrl", "https://www.kenrobot.com");
 				break;
 			case "visit-arduino":
-				kenrobot.postMessage("app:openUrl", config.url.arduino);
+				kenrobot.postMessage("app:openUrl", "http://www.arduino.cn");
 				break;
 			case "suggestion":
-				kenrobot.postMessage("app:openUrl", config.url.support);
+				kenrobot.postMessage("app:openUrl", "http://www.arduino.cn/forum-101-1.html");
 				break;
 			case "about-kenrobot":
 				var info = kenrobot.appInfo;
 				kenrobot.trigger("about", "show", {
 					version: info.version,
-					url: config.url.kenrobot,
+					url: "https://www.kenrobot.com",
 					date: info.date,
 					platform: info.platform,
-					bit: info.bit,
+					appBit: info.appBit,
+					buildNumber: info.buildNumber,
 				});
 				break;
 		}
 	}
 
 	function onCheckUpdate(manual) {
+		var promise = $.Deferred();
+
 		manual = manual !== false;
 
-		kenrobot.postMessage("app:checkUpdate", config.url.checkUpdate).then(result => {
+		kenrobot.postMessage("app:checkUpdate").then(result => {
 			if(result.status != 0) {
 				manual && util.message("已经是最新版本了");
+				promise.resolve(1);
 				return;
 			}
 
 			kenrobot.trigger("update", "show", result.data);
+			promise.resolve(0);
 		}, err => {
 			manual && util.message("检查更新失败");
+			promise.resolve(-1)
 		});
+
+		return promise
 	}
 
-	function onSwitch(type) {
+	function onSwitch(name) {
 		kenrobot.reset();
 
 		kenrobot.trigger("app", "will-leave");
-		iframe.src = `${baseUrl}/${type}`;
+		iframe.src = `${baseUrl}/${name}`;
 
-		iframe.addEventListener("load", _ => {
+		iframe.addEventListener("load", () => {
 			mousetrap = Mousetrap(iframe.contentDocument);
 		}, false);
 		pace.restart();
-
-		kenrobot.viewType = type;
 	}
 
 	function onFullscreenChange(fullscreen) {

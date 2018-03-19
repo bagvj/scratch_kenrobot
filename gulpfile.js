@@ -1,9 +1,12 @@
 /**
  * 引入 gulp及组件
- * npm install --save-dev 7zip-bin asar babel-core babel-preset-es2015 browserify del electron@1.8.2 electron-builder@20.4.1 fs-extra globby gulp gulp-autoprefixer gulp-babel gulp-clean-css gulp-if gulp-minify-html gulp-requirejs-optimize gulp-ruby-sass gulp-sftp gulp-uglify hasha isutf8 minimist nconf q run-sequence vinyl-buffer vinyl-source-stream
+ * npm install --save-dev 7zip-bin asar babel-core babel-preset-es2015 browserify del electron@1.8.2 electron-builder@20.5.1 fs-extra globby gulp gulp-autoprefixer gulp-babel gulp-clean-css gulp-if gulp-minify-html gulp-requirejs-optimize gulp-ruby-sass gulp-sftp gulp-uglify hasha isutf8 minimist nconf q run-sequence vinyl-buffer vinyl-source-stream
  * npm install --save express 7zip-bin command-line-args electron-debug electron-is electron-log flat-cache fs-extra globby@7 hasha iconv-lite is-online lodash node-fetch q sudo-prompt terminate
  * npm install --global  gulp node-gyp prebuild-install electron-rebuild electron@1.8.2
  * ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/
+ * gem install sass
+ * ruby --version
+ * python --version
  */
 
 const gulp = require('gulp') //基础库
@@ -260,10 +263,11 @@ gulp.task('pack', ['pack-main', 'pack-renderer'])
  * 示例: gulp build-pack --release --branch=beta
  *       gulp build-pack --release --branch=beta --platform=arm --standalone --compress
  *       gulp build-pack --release --platform=win --arch=x64 --target=nsis --branch=beta
+ *       gulp build-pack --release --platform=win --arch=x64 --target=nsis --branch=beta --packages=Intel --feature=with-101
  */
 gulp.task('build', ['clean-dist'], callback => {
 	var platform = args.platform || "win"
-	var branch = args.branch || "beta"
+	var branch = args.branch || "release"
 	var feature = args.feature || ""
 	var arch
 	var target
@@ -502,7 +506,9 @@ gulp.task('upload', () => {
 	}
 
 	var files = args.file.split(',')
-	var options = args.remotePath ? {remotePath: args.remotePath} : {}
+	var options = args.remotePath ? {
+		remotePath: args.remotePath
+	} : {}
 
 	return upload(files, options)
 })

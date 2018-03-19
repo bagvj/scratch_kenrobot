@@ -196,9 +196,9 @@ function listenMessages() {
 	listenMessage("loadOpenOrRecentProject", () => loadOpenOrRecentProject())
 
 	listenMessage("projectRead", projectPath => Project.read(projectPath))
-	listenMessage("projectOpen", name => Project.open(name))
-	listenMessage("projectSave", (name, data, savePath) => Project.save(name, data, savePath))
-	listenMessage("projectSaveAs", (name, data, isTemp) => Project.saveAs(name, data, isTemp))
+	listenMessage("projectOpen", (type, name) => Project.open(type, name))
+	listenMessage("projectSave", (name, data, type, savePath) => Project.save(name, data, type, savePath))
+	listenMessage("projectSaveAs", (name, data, type) => Project.saveAs(name, data, type))
 
 	listenMessage("projectSync", () => Project.sync())
 	listenMessage("projectList", () => Project.list())

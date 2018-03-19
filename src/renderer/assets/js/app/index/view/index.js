@@ -1,4 +1,4 @@
-define(['./titlebar', './dialog/update', './dialog/login', './dialog/about', './dialog/common', './dialog/prompt', './dialog/save', './dialog/saveAs', './dialog/error', './dialog/project', './dialog/port', './dialog/no-arduino', './dialog/setting'], function(titlebar, update, login, about, common, prompt, save, saveAs, error, project, port, noArduino, setting) {
+define(['./titlebar', './dialog/update', './dialog/login', './dialog/about', './dialog/common', './dialog/prompt', './dialog/save', './dialog/saveAs', './dialog/error', './dialog/project', './dialog/setting'], function(titlebar, update, login, about, common, prompt, save, saveAs, error, project, setting) {
 
 	function init() {
 		titlebar.init();
@@ -12,8 +12,6 @@ define(['./titlebar', './dialog/update', './dialog/login', './dialog/about', './
 		saveAs.init();
 		error.init();
 		project.init();
-		port.init();
-		noArduino.init();
 		setting.init();
 	}
 

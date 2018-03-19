@@ -7,14 +7,14 @@ define(['vendor/jquery', 'app/common/util/util', 'app/common/util/emitor'], func
 		dialogWin = $(".setting-dialog").on('click', '.left ul > li', onTabClick);
 		tabs = dialogWin.find(".right .tab");
 
-		tabs.filter(".tab-ide").on("change", '.font-size', function() {
-			applySetting("ide", "font-size", parseInt($(this).val()));
+		tabs.filter(".tab-editor").on("change", '.font-size', function() {
+			applySetting("editor", "font-size", parseInt($(this).val()));
 			saveSetting();
 		}).on("change", '.line-height', function() {
-			applySetting("ide", "line-height", parseInt($(this).val()));
+			applySetting("editor", "line-height", parseInt($(this).val()));
 			saveSetting();
 		}).on("change", '.tab-size', function() {
-			applySetting("ide", "tab-size", parseInt($(this).val()));
+			applySetting("editor", "tab-size", parseInt($(this).val()));
 			saveSetting();
 		});
 
@@ -38,32 +38,28 @@ define(['vendor/jquery', 'app/common/util/util', 'app/common/util/emitor'], func
 
 		var text = li.text();
 		dialogWin.find('.x-dialog-title').text("设置 > " + text);
-
-		if(action != "ide") {
-			util.message("敬请期待");
-		}
 	}
 
 	function update() {
 		if(!tabs.filter("> .active").length) {
-			dialogWin.find(`.left ul > li[data-action="${kenrobot.viewType}"]`).click();
+			dialogWin.find(`.left ul > li:eq(0)`).click();
 		}
 
-		kenrobot.postMessage("app:loadSetting").then(result => {
+		kenrobot.postMessage("app:getCache", "setting", {}).then(result => {
 			setting = result;
 
-			var ideSetting = setting.ide || {}
-			if(ideSetting) {
-				var ideTab = tabs.filter(".tab-ide");
-				ideTab.find(".font-size").val(ideSetting["font-size"] || 16);
-				ideTab.find(".line-height").val(ideSetting["line-height"] || 24);
-				ideTab.find(".tab-size").val(ideSetting["tab-size"] || 4);
+			var editorSetting = setting.editor || {}
+			if(editorSetting) {
+				var editorTab = tabs.filter(".tab-editor");
+				editorTab.find(".font-size").val(editorSetting["font-size"] || 16);
+				editorTab.find(".line-height").val(editorSetting["line-height"] || 24);
+				editorTab.find(".tab-size").val(editorSetting["tab-size"] || 4);
 			}
 		});
 	}
 
 	function saveSetting() {
-		kenrobot.postMessage("app:saveSetting", setting);
+		kenrobot.postMessage("app:setCache", "setting", setting);
 	}
 
 	function applySetting(type, name, value) {
