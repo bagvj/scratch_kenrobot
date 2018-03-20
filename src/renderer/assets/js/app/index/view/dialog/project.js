@@ -30,7 +30,7 @@ define(['vendor/jquery', 'vendor/lodash', 'vendor/perfect-scrollbar', 'app/commo
 	}
 
 	function update() {
-		kenrobot.postMessage("app:projectList").then(list => {
+		kenrobot.postMessage("app:projectList", kenrobot.viewType).then(list => {
 			list = _.sortBy(list, "modify_time");
 			list.reverse().forEach(projectData => {
 				var uid = util.uuid(6);
@@ -41,7 +41,7 @@ define(['vendor/jquery', 'vendor/lodash', 'vendor/perfect-scrollbar', 'app/commo
 					<span class="modify-time">${time}</span>
 					<span class="actions"><i class="kenrobot ken-clear" data-action="delete"></i></span>
 				</li>`);
-				li.data("name", projectData.name).data("hash", projectData.hash);
+				li.data("name", projectData.name).data("type", projectData.type).data("hash", projectData.hash);
 				projectList.append(li);
 			});
 
@@ -76,9 +76,9 @@ define(['vendor/jquery', 'vendor/lodash', 'vendor/perfect-scrollbar', 'app/commo
 	function onTitleClick(e) {
 		var li = $(this).parents("li");
 		var name = li.data("name");
-		var hash = li.data("hash");
+		var type = li.data("type");
 
-		setTimeout(() => kenrobot.trigger("project", "open-by", name), 500);
+		setTimeout(() => kenrobot.trigger("project", "open-by", name, type), 500);
 		dialogWin.find(".x-dialog-close").trigger("click");
 
 		return false;

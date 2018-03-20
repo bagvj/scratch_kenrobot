@@ -200,8 +200,8 @@ function listenMessages() {
 	listenMessage("projectSave", (name, data, type, savePath) => Project.save(name, data, type, savePath))
 	listenMessage("projectSaveAs", (name, data, type) => Project.saveAs(name, data, type))
 
-	listenMessage("projectSync", () => Project.sync())
-	listenMessage("projectList", () => Project.list())
+	listenMessage("projectSync", type => Project.sync(type))
+	listenMessage("projectList", type => Project.list(type))
 
 	if(DEV) {
 		listenMessage("projectCreate", name => Project.create(name))

@@ -9,7 +9,6 @@ const Token = require('./token')
 const Url = require('../config/url')
 
 const PROJECT_EXT = ".kbl"
-const PROJECT_TYPE = "kblock"
 
 var throttleSync = util.throttle(sync, 2000)
 
@@ -76,7 +75,14 @@ function open(type, name) {
 			return util.rejectPromise(null, deferred)
 		}
 
-		doOpen(path.join(getProjectsDir(), name))
+		var openPath = path.join(getProjectsDir(), name + PROJECT_EXT)
+		if(!fs.existsSync(openPath)) {
+			openPath = path.join(getProjectsDir(), type, `${name}.${type === "scratch3" ? "json" : "sb2"}`)
+			if(!fs.existsSync(openPath)) {
+				return util.rejectPromise(null, deferred)
+			}
+		}
+		doOpen(openPath)
 
 		return deferred.promise
 	} else {
@@ -110,7 +116,7 @@ function save(name, data, type, savePath) {
 
 	savePath = path.join(getProjectsDir(), name + PROJECT_EXT)
 	doSave(savePath, name, data, type, "cloud").then(result => {
-		updateLocalItem(name).then(() => {
+		updateLocalItem(type, name).then(() => {
 			throttleSync()
 			deferred.resolve(result)
 		}, err => {
@@ -153,13 +159,13 @@ function saveAs(name, data, type, savePath) {
 	return deferred.promise
 }
 
-function sync() {
+function sync(type) {
 	var deferred = Q.defer()
 
 	log.debug(`project sync`)
 
 	Q.all([
-		list(),
+		list(type),
 		loadLocalList()
 	]).then(result => {
 		var [remoteList, localList] = result
@@ -181,22 +187,23 @@ function sync() {
 	return deferred.promise
 }
 
-function list() {
+function list(type) {
+	var types = (type || "scratch2,scratch3").split(",")
 	var deferred = Q.defer()
 
-	log.debug(`project list`)
+	log.debug(`project list: ${types.join(" ")}`)
 
 	Token.request(Url.PROJECT_SYNC_LIST, {
 		method: "post",
 		data: {
-			type: PROJECT_TYPE,
+			type: types.join(","),
 		},
 	}).then(result => {
 		if(result.status != 0) {
 			deferred.reject(result.message)
 			return
 		}
-		deferred.resolve(result.data.filter(p => p.type == PROJECT_TYPE))
+		deferred.resolve(result.data.filter(p => types.indexOf(p.type) >= 0))
 	}, err => {
 		err && log.info(err)
 		deferred.reject(err)
@@ -205,16 +212,16 @@ function list() {
 	return deferred.promise
 }
 
-function create(name) {
+function create(type, name) {
 	var deferred = Q.defer()
 
-	log.debug(`project create: ${name}`)
+	log.debug(`project create: ${name}:${type}`)
 
 	Token.request(Url.PROJECT_SYNC_CREATE, {
 		method: 'post',
 		data: {
 			name: name,
-			type: PROJECT_TYPE
+			type: type
 		}
 	}).then(result => {
 		if(result.status != 0) {
@@ -223,7 +230,7 @@ function create(name) {
 		}
 
 		var item = result.data
-		updateLocalItem(item.name, item.modify_time, item.hash).then(() => {
+		updateLocalItem(type, item.name, item.modify_time, item.hash).then(() => {
 			log.debug(`project create success: ${name} ${item.hash}`)
 			deferred.resolve(item)
 		}, err => {
@@ -289,7 +296,7 @@ function upload(name, hash) {
 			}
 
 			var item = result.data
-			updateLocalItem(name, item.modify_time, hash).then(() => {
+			updateLocalItem(item.type, name, item.modify_time, hash).then(() => {
 				log.debug(`project upload success: ${name}`)
 				deferred.resolve(item)
 			}, err => {
@@ -308,7 +315,7 @@ function upload(name, hash) {
 	return deferred.promise
 }
 
-function download(name, hash) {
+function download(name, hash, type) {
 	var deferred = Q.defer()
 
 	log.debug(`project download: ${name} ${hash}`)
@@ -322,7 +329,7 @@ function download(name, hash) {
 		res.body.pipe(stream)
 		res.body.on("end", () => {
 			util.uncompress(savePath, getProjectsDir()).then(() => {
-				updateLocalItem(name, null, hash).then(() => {
+				updateLocalItem(type, name, null, hash).then(() => {
 					log.debug(`project download success: ${name}`)
 					deferred.resolve()
 				}, err => {
@@ -481,7 +488,7 @@ function createSync(createList, notify) {
 		}
 
 		var item = createList.shift()
-		create(item.name).then(it => {
+		create(item.type, item.name).then(it => {
 			item.hash = it.hash
 			notify(item.name, "create")
 			if(createList.length == 0) {
@@ -536,7 +543,7 @@ function downloadSync(downloadList, notify) {
 		}
 
 		var item = downloadList.shift()
-		download(item.name, item.hash).then(() => {
+		download(item.name, item.hash, item.type).then(() => {
 			notify(item.name, "download")
 			if(downloadList.length == 0) {
 				deferred.resolve()
@@ -576,19 +583,21 @@ function saveLocalList(localList) {
 	return util.writeJson(getLocalListPath(), localList)
 }
 
-function updateLocalItem(name, modify_time, hash) {
+function updateLocalItem(type, name, modify_time, hash) {
 	var deferred = Q.defer()
 	modify_time = modify_time || util.stamp()
 
 	loadLocalList().then(localList => {
-		var localItem = localList.find(it => (hash && it.hash == hash) || it.name == name)
+		var localItem = localList.find(it => (!it.type || type == it.type) && ((hash && it.hash == hash) || it.name == name))
 		if(!localItem) {
 			localList.push({
+				type: type,
 				name: name,
 				hash: hash,
 				modify_time: modify_time,
 			})
 		} else {
+			type && (localItem.type = type)
 			name && (localItem.name = name)
 			hash && (localItem.hash = hash)
 			localItem.modify_time = modify_time
