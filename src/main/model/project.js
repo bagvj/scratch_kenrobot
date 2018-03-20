@@ -11,10 +11,7 @@ const Url = require('../config/url')
 const PROJECT_EXT = ".kbl"
 const PROJECT_TYPE = "kblock"
 
-const months = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"]
-
-var suffix = 96
-var throttleSync = util.throttle(sync, 3000)
+var throttleSync = util.throttle(sync, 2000)
 
 function check(projectPath) {
 	if(!projectPath || path.extname(projectPath) != PROJECT_EXT || !fs.existsSync(projectPath)) {
@@ -113,13 +110,13 @@ function save(name, data, type, savePath) {
 
 	savePath = path.join(getProjectsDir(), name + PROJECT_EXT)
 	doSave(savePath, name, data, type, "cloud").then(result => {
-		// updateLocalItem(name).then(() => {
-		// 	throttleSync()
+		updateLocalItem(name).then(() => {
+			throttleSync()
 			deferred.resolve(result)
-		// }, err => {
-		// 	err && log.info(err)
-		// 	deferred.reject(err)
-		// })
+		}, err => {
+			err && log.info(err)
+			deferred.reject(err)
+		})
 	}, err => {
 		err && log.info(err)
 		deferred.reject(err)
@@ -189,7 +186,12 @@ function list() {
 
 	log.debug(`project list`)
 
-	Token.request(Url.PROJECT_SYNC_LIST, {method: "post"}).then(result => {
+	Token.request(Url.PROJECT_SYNC_LIST, {
+		method: "post",
+		data: {
+			type: PROJECT_TYPE,
+		},
+	}).then(result => {
 		if(result.status != 0) {
 			deferred.reject(result.message)
 			return
@@ -309,7 +311,7 @@ function upload(name, hash) {
 function download(name, hash) {
 	var deferred = Q.defer()
 
-	log.debug(`project download: ${hash}`)
+	log.debug(`project download: ${name} ${hash}`)
 
 	var url = `${Url.PROJECT_SYNC_DOWNLOAD}/${hash}`
 	Token.request(url, {method: "post"}, false).then(res => {
@@ -325,19 +327,23 @@ function download(name, hash) {
 					deferred.resolve()
 				}, err => {
 					err && log.info(err)
-					deferred.reject(err)
+					// deferred.reject(err)
+					deferred.resolve()
 				})
 			}, err => {
 				err && log.info(err)
-				deferred.reject(err)
+				// deferred.reject(err)
+				deferred.resolve()
 			})
 		}).on("error", err => {
 			err && log.info(err)
-			deferred.reject(err)
+			// deferred.reject(err)
+			deferred.resolve()
 		})
 	}, err => {
 		err && log.info(err)
-		deferred.reject(err)
+		// deferred.reject(err)
+		deferred.resolve()
 	})
 
 	return deferred.promise
@@ -347,7 +353,7 @@ function compress(projectsDir, name) {
 	var deferred = Q.defer()
 
 	var outputPath = path.join(util.getAppPath("appData"), 'temp', `${util.uuid(6)}.7z`)
-	var files = [`${name}/${name}${PROJECT_EXT}`]
+	var files = [`${name}${PROJECT_EXT}`]
 	util.compress(projectsDir, files, outputPath).then(() => {
 		deferred.resolve(outputPath)
 	}, err => {
@@ -448,7 +454,7 @@ function findSyncList(remoteList, localList) {
 		var localItem = localDic[item.name]
 		if(!localItem || !localItem.modify_time || localItem.modify_time < item.modify_time) {
 			downloadList.push(item)
-		} else if(!check(path.join(getProjectsDir(), item.name, item.name + PROJECT_EXT))) {
+		} else if(!check(path.join(getProjectsDir(), item.name + PROJECT_EXT))) {
 			downloadList.push(item)
 		}
 	})

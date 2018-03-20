@@ -60,12 +60,15 @@ webpackJsonp([1],{
 			case "new-project":
 				projectExtra = {};
 				kenrobot.view.newProject();
+				setTimeout(function () {
+					return kenrobot.view.project = kenrobot.view.getProject();
+				}, 1000);
 				break;
 			case "open-project":
 				onOpenProject();
 				break;
 			case "save-project":
-				onSaveProject();
+				onSaveProject(false, arguments.length <= 1 ? undefined : arguments[1]);
 				break;
 			case "save-as-project":
 				onSaveProject(true);
@@ -85,6 +88,7 @@ webpackJsonp([1],{
 		kenrobot.postMessage("app:projectOpen", "scratch3", name).then(function (result) {
 			projectExtra = { path: result.path, project_name: result.project_name };
 			kenrobot.view.loadProject(result.data);
+			kenrobot.view.project = result.data;
 			kenrobot.trigger("util", "message", "打开成功");
 		}, function (err) {
 			kenrobot.trigger("util", "message", {
@@ -94,10 +98,10 @@ webpackJsonp([1],{
 		});
 	}
 
-	function onSaveProject(saveAs) {
+	function onSaveProject(saveAs, saveCallback) {
 		var doSave = function doSave(_) {
 			if (projectExtra.path) {
-				saveProject(kenrobot.view.getProject(), saveAs);
+				saveProject(kenrobot.view.getProject(), saveAs, saveCallback);
 			} else if (saveAs || !projectExtra.project_name) {
 				kenrobot.trigger("prompt", "show", {
 					title: "项目保存",
@@ -112,11 +116,11 @@ webpackJsonp([1],{
 						}
 
 						projectExtra.project_name = name;
-						saveProject(kenrobot.view.getProject(), saveAs);
+						saveProject(kenrobot.view.getProject(), saveAs, saveCallback);
 					}
 				});
 			} else {
-				saveProject(kenrobot.view.getProject(), saveAs);
+				saveProject(kenrobot.view.getProject(), saveAs, saveCallback);
 			}
 		};
 
@@ -128,7 +132,7 @@ webpackJsonp([1],{
 		}
 	}
 
-	function saveProject(data, saveAs) {
+	function saveProject(data, saveAs, callback) {
 		var promise;
 		if (saveAs) {
 			promise = kenrobot.postMessage("app:projectSaveAs", projectExtra.project_name, data, "scratch3");
@@ -138,7 +142,9 @@ webpackJsonp([1],{
 
 		promise.then(function (result) {
 			projectExtra = Object.assign(projectExtra, result);
+			kenrobot.view.project = result.data;
 			kenrobot.trigger("util", "message", "保存成功");
+			callback && callback();
 		}, function (err) {
 			kenrobot.trigger("util", "message", {
 				text: "保存失败",

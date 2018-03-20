@@ -95,22 +95,22 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 	}
 
 	function onProjectSync() {
-		// if(inSync || !kenrobot.user) {
-		// 	return;
-		// }
+		if(inSync || !kenrobot.user) {
+			return;
+		}
 
-		// inSync = true;
-		// // util.message("项目开始同步");
-		// kenrobot.postMessage("app:projectSync").then(() => {
-		// 	inSync = false;
-		// 	util.message("项目同步成功");
-		// }, err => {
-		// 	inSync = false;
-		// 	util.message({
-		// 		text: "项目同步失败",
-		// 		type: "error",
-		// 	});
-		// });
+		inSync = true;
+		// util.message("项目开始同步");
+		kenrobot.postMessage("app:projectSync").then(() => {
+			inSync = false;
+			util.message("项目同步成功");
+		}, err => {
+			inSync = false;
+			util.message({
+				text: "项目同步失败",
+				type: "error",
+			});
+		});
 	}
 
 	function onMenuAction(action, extra) {
@@ -212,9 +212,7 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 			text: message,
 			cancelLabel: "确定",
 			confirmLabel: "查看日志",
-			onConfirm: function() {
-				kenrobot.delayTrigger(500, "error", "show", {output: [message, err]});
-			}
+			onConfirm: () => kenrobot.delayTrigger(500, "error", "show", {output: [message, err]}),
 		});
 	}
 
