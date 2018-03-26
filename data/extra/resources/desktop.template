@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=KBlock
+GenericName=KBlock
+Comment=graphic programming 
+Exec=<BINARY_LOCATION>
+Icon=<ICON_NAME>
+Terminal=false
+Categories=Development;IDE;Electronics;Education
+MimeType=text/x-kblock;
+Keywords=graphic programming;electronics;avr;microcontroller;
+StartupWMClass=processing-app-Base

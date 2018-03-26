@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+    <mime-type type="text/x-kblock">
+        <comment>KBlock source code</comment>
+		<comment xml:lang="ara">شفرة مصدر KBlock</comment>
+		<comment xml:lang="be@latin">Kryničny kod KBlock</comment>
+		<comment xml:lang="bg">Изходен код на KBlock</comment>
+		<comment xml:lang="ca">codi font en KBlock</comment>
+		<comment xml:lang="da">KBlockkildekode</comment>
+		<comment xml:lang="de">KBlock-Quelltext</comment>
+		<comment xml:lang="el">πηγαίος κώδικας KBlock</comment>
+		<comment xml:lang="en_GB">KBlock source code</comment>
+		<comment xml:lang="eo">KBlock-fontkodo</comment>
+		<comment xml:lang="es">código fuente en KBlock</comment>
+		<comment xml:lang="eu">KBlock iturburu-kodea</comment>
+		<comment xml:lang="fi">KBlock-lähdekoodi</comment>
+		<comment xml:lang="fr">code source KBlock</comment>
+		<comment xml:lang="ga">cód foinseach KBlock</comment>
+		<comment xml:lang="hu">KBlock-forráskód</comment>
+		<comment xml:lang="id">Kode program KBlock</comment>
+		<comment xml:lang="it">Codice sorgente KBlock</comment>
+		<comment xml:lang="ja">KBlock ソースコード</comment>
+		<comment xml:lang="lt">KBlock pradinis kodas</comment>
+		<comment xml:lang="lv">KBlock pirmkods</comment>
+		<comment xml:lang="ms">Kod sumber KBlock</comment>
+		<comment xml:lang="nb">KBlock-kildekode</comment>
+		<comment xml:lang="nl">KBlock-broncode</comment>
+		<comment xml:lang="nn">KBlock-kjeldekode</comment>
+		<comment xml:lang="pl">Kod źródłowy KBlock</comment>
+		<comment xml:lang="pt">código fonte KBlock</comment>
+		<comment xml:lang="pt_BR">Código fonte KBlock</comment>
+		<comment xml:lang="ru">исходный код KBlock</comment>
+		<comment xml:lang="sq">Kod burues KBlock</comment>
+		<comment xml:lang="sv">KBlock-källkod</comment>
+		<comment xml:lang="uk">Вихідний код на мові KBlock</comment>
+		<comment xml:lang="vi">Mã nguồn KBlock</comment>
+		<comment xml:lang="zh_CN">KBlock 源代码</comment>
+		<comment xml:lang="zh_TW">KBlock 源代碼</comment>
+        <sub-class-of type="text/x-c++src"/>
+        <glob pattern="*.kbl"/>
+    </mime-type>
+</mime-info>
