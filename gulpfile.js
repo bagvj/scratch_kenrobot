@@ -322,10 +322,8 @@ gulp.task('build', ['clean-dist'], callback => {
 	nconf.save()
 
 	if(args.standalone) {
-		var suffix = platform === "arm" ? `/${arch}` : ""
 		var extraFiles = [
-			{from: `./data/plugins/FlashPlayer/${platform}${suffix}/**/*`, to: "./data/plugins/FlashPlayer/**/*"},
-			`!./data/plugins/FlashPlayer/${platform}/**/*${arch == "ia32" ? "64" : "32"}.dll`,
+			{ from: `./data/plugins/FlashPlayer/${platform}/${arch}/**/*`, to: "./data/plugins/FlashPlayer/**/*"},
 		]
 
 		var dist = path.join(DIST, `${platform}-${arch}-dir`)
@@ -432,12 +430,9 @@ gulp.task('build', ['clean-dist'], callback => {
 			callback()
 		})
 	} else {
-		var suffix = platform === "arm" ? `/${arch}` : ""
 		var extraFiles = [
-			{ from: `data/plugins/FlashPlayer/${platform}${suffix}`, to: `data/plugins/FlashPlayer` },
+			{ from: `data/plugins/FlashPlayer/${platform}/${arch}`, to: `data/plugins/FlashPlayer` },
 		]
-
-		platform === "win" && (extraFiles.push(`!./data/plugins/FlashPlayer/${platform}/*${arch === "ia32" ? "32" : "64"}.dll`))
 
 		builder.build({
 			targets: targets,
