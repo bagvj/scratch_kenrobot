@@ -102,7 +102,20 @@ function getAppPath(name, extra) {
 		case "driver":
 			return path.join(getAppPath("appResource"), "driver")
 		case "plugins":
-			return path.join(getAppPath("appResource"), "plugins")
+			var pluginsPath = path.join(getAppPath("appResource"), "plugins")
+			var pluginName = extra
+			if(pluginName === "FlashPlayer") {
+				var appInfo = getAppInfo()
+				var plugin = is.windows() ? `pepflashplayer${appInfo.appBit}.dll` : (is.macOS() ? "PepperFlashPlayer.plugin" : "libpepflashplayer.so")
+
+				if(!is.dev()) {
+					return path.join(pluginsPath, pluginName, plugin)
+				}
+
+				var suffix = appInfo.platform !== "arm" ? "" : appInfo.appArch
+				return path.join(pluginsPath, pluginName, appInfo.platform, suffix, plugin)
+			}
+			return pluginsPath
 		case "command":
 			return path.join(getAppPath("appData"), "temp", `${uuid(6)}`)
 		case "libraries":

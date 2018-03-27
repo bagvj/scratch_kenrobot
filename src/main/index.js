@@ -118,12 +118,11 @@ function initLog() {
 function initFlashPlugin() {
 	var appInfo = util.getAppInfo()
 	var version = '26.0.0.131'
-	var plugin = is.windows() ? `pepflashplayer${appInfo.appBit}.dll` : (is.macOS() ? "PepperFlashPlayer.plugin" : "libpepflashplayer.so")
-	plugin = path.join(util.getAppPath("plugins"), "FlashPlayer", appInfo.platform, plugin)
 
-	log.info(`initFlashPlugin: ${plugin} version: ${version}`)
+	var pluginPath = util.getAppPath("plugins", "FlashPlayer")
+	log.debug(`initFlashPlugin: ${pluginPath} version: ${version}`)
 
-	app.commandLine.appendSwitch('ppapi-flash-path', plugin)
+	app.commandLine.appendSwitch('ppapi-flash-path', pluginPath)
 	app.commandLine.appendSwitch('ppapi-flash-version', version)
 }
 
