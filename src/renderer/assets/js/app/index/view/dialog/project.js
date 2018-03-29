@@ -89,11 +89,12 @@ define(['vendor/jquery', 'vendor/lodash', 'vendor/perfect-scrollbar', 'app/commo
 		var li = $(this).parents("li");
 		var name = li.data("name");
 		var hash = li.data("hash");
+		var type = li.data("type");
 
 		if(action == "delete") {
 			util.confirm({
 				text: `确定要删除项目“${name}”吗？`,
-				onConfirm: () => deleteProject(name, hash),
+				onConfirm: () => deleteProject(type, name, hash),
 			});
 		}
 
@@ -124,6 +125,7 @@ define(['vendor/jquery', 'vendor/lodash', 'vendor/perfect-scrollbar', 'app/commo
 			return {
 				name: li.data("name"),
 				hash: li.data("hash"),
+				type: li.data("type"),
 			};
 		});
 
@@ -133,7 +135,7 @@ define(['vendor/jquery', 'vendor/lodash', 'vendor/perfect-scrollbar', 'app/commo
 			}
 
 			var item = items.shift();
-			deleteProject(item.name, item.hash);
+			deleteProject(item.type, item.name, item.hash);
 			setTimeout(() => doDelete(), 1000);
 		}
 
@@ -143,8 +145,8 @@ define(['vendor/jquery', 'vendor/lodash', 'vendor/perfect-scrollbar', 'app/commo
 		});
 	}
 
-	function deleteProject(name, hash) {
-		kenrobot.postMessage("app:projectDelete", name, hash).then(() => {
+	function deleteProject(type, name, hash) {
+		kenrobot.postMessage("app:projectDelete", type, name, hash).then(() => {
 			onDeleteProjectSuccess(name, hash);
 			util.message(`删除项目“${name}”成功`);
 		}, err => {

@@ -9,6 +9,8 @@ const Token = require('./token')
 const Url = require('../config/url')
 
 const PROJECT_EXT = ".kbl"
+const SCRATCH_2 = "scratch2"
+const SCRATCH_3 = "scratch3"
 
 var throttleSync = util.throttle(sync, 2000)
 
@@ -27,7 +29,7 @@ function read(projectPath) {
 	if(ext === ".sb2") {
 		util.readFile(projectPath, "base64").then(result => {
 			deferred.resolve({
-				type: "scratch2",
+				type: SCRATCH_2,
 				project_name: path.basename(projectPath, path.extname(projectPath)),
 				path: projectPath,
 				data: result
@@ -43,7 +45,7 @@ function read(projectPath) {
 				deferred.resolve(result)
 			} else {
 				deferred.resolve({
-					type: "scratch3",
+					type: SCRATCH_3,
 					project_name: path.basename(projectPath, path.extname(projectPath)),
 					path: projectPath,
 					data: result
@@ -75,14 +77,11 @@ function open(type, name) {
 			return util.rejectPromise(null, deferred)
 		}
 
-		var openPath = path.join(getProjectsDir(), name + PROJECT_EXT)
-		if(!fs.existsSync(openPath)) {
-			openPath = path.join(getProjectsDir(), type, `${name}.${type === "scratch3" ? "json" : "sb2"}`)
-			if(!fs.existsSync(openPath)) {
-				return util.rejectPromise(null, deferred)
-			}
+		var projectPath = resolveProjectPath(type, name)
+		if(!projectPath) {
+			return util.rejectPromise(null, deferred)
 		}
-		doOpen(openPath)
+		doOpen(projectPath)
 
 		return deferred.promise
 	} else {
@@ -116,6 +115,7 @@ function save(name, data, type, savePath) {
 
 	savePath = path.join(getProjectsDir(), name + PROJECT_EXT)
 	doSave(savePath, name, data, type, "cloud").then(result => {
+		util.removeFile(resolveProjectPath(type, name, true), true)
 		updateLocalItem(type, name).then(() => {
 			throttleSync()
 			deferred.resolve(result)
@@ -188,7 +188,7 @@ function sync(type) {
 }
 
 function list(type) {
-	var types = (type || "scratch2,scratch3").split(",")
+	var types = (type || `${SCRATCH_2},${SCRATCH_3}`).split(",")
 	var deferred = Q.defer()
 
 	log.debug(`project list: ${types.join(" ")}`)
@@ -245,7 +245,7 @@ function create(type, name) {
 	return deferred.promise
 }
 
-function remove(name, hash) {
+function remove(type, name, hash) {
 	var deferred = Q.defer()
 
 	log.debug(`project remove: ${hash}`)
@@ -262,7 +262,8 @@ function remove(name, hash) {
 		}
 
 		Q.all([
-			util.removeFile(path.join(getProjectsDir(), name)),
+			util.removeFile(resolveProjectPath(type, name)),
+			util.removeFile(resolveProjectPath(type, name, true)),
 			removeLocalItem(hash),
 		]).then(() => {
 			log.debug(`project remove success: ${name}`)
@@ -279,12 +280,16 @@ function remove(name, hash) {
 	return deferred.promise
 }
 
-function upload(name, hash) {
+function upload(type, name, hash) {
 	var deferred = Q.defer()
 
 	log.debug(`project upload: ${name}: ${hash}`)
 
-	compress(getProjectsDir(), name).then(outputPath => {
+	var projectPath = resolveProjectPath(type, name)
+	if(!projectPath) {
+		return util.rejectPromise(null, deferred)
+	}
+	compress(projectPath).then(outputPath => {
 		var url = `${Url.PROJECT_SYNC_UPLOAD}/${hash}`
 		Token.request(url, {
 			method: "post",
@@ -356,12 +361,11 @@ function download(name, hash, type) {
 	return deferred.promise
 }
 
-function compress(projectsDir, name) {
+function compress(projectPath) {
 	var deferred = Q.defer()
 
 	var outputPath = path.join(util.getAppPath("appData"), 'temp', `${util.uuid(6)}.7z`)
-	var files = [`${name}${PROJECT_EXT}`]
-	util.compress(projectsDir, files, outputPath).then(() => {
+	util.compress(path.dirname(projectPath), path.basename(projectPath), outputPath).then(() => {
 		deferred.resolve(outputPath)
 	}, err => {
 		err && log.info(err)
@@ -461,16 +465,18 @@ function findSyncList(remoteList, localList) {
 		var localItem = localDic[item.name]
 		if(!localItem || !localItem.modify_time || localItem.modify_time < item.modify_time) {
 			downloadList.push(item)
-		} else if(!check(path.join(getProjectsDir(), item.name + PROJECT_EXT))) {
+		} else if(!resolveProjectPath(item.type, item.name)) {
 			downloadList.push(item)
 		}
 	})
 	localList.forEach(item => {
 		var remoteItem = remoteDic[item.name]
 		if(!remoteItem) {
+			!item.type && (item.type = resolveProjectType(item.type))
 			createList.push(item)
 			uploadList.push(item)
 		} else if(remoteItem.modify_time < item.modify_time) {
+			!item.type && (item.type = remoteItem.type)
 			uploadList.push(item)
 		}
 	})
@@ -516,7 +522,7 @@ function uploadSync(uploadList, notify) {
 		}
 
 		var item = uploadList.shift()
-		upload(item.name, item.hash).then(() => {
+		upload(item.type, item.name, item.hash).then(() => {
 			notify(item.name, "upload")
 			if(uploadList.length == 0) {
 				deferred.resolve()
@@ -651,6 +657,45 @@ function getLocalListPath() {
 	return path.join(util.getAppPath("appData"), "projects", getUserSpec(userId, 1), "list.json")
 }
 
+function resolveProjectPath(type, name, old) {
+	var dir = getProjectsDir()
+	if(old) {
+		return path.join(dir, type, `${name}${resolveOldExt(type)}`)
+	}
+
+	var projectPath = path.join(dir, name + PROJECT_EXT)
+	if(!fs.existsSync(projectPath)) {
+		projectPath = path.join(dir, type, `${name}${resolveOldExt(type)}`)
+		if(!fs.existsSync(projectPath)) {
+			return null
+		}
+	}
+
+	return projectPath
+}
+
+function resolveOldExt(type) {
+	return type === SCRATCH_2 ? ".sb2" : ".json"
+}
+
+function resolveProjectType(name) {
+	var dir = getProjectsDir()
+	var projectPath = path.join(dir, name + PROJECT_EXT)
+	if(fs.existsSync(projectPath)) {
+		var project = util.readJson(projectPath, {}, true)
+		return project.project_type
+	} else {
+		if(fs.existsSync(path.join(dir, SCRATCH_3, `${name}.json`))) {
+			return SCRATCH_3
+		}
+		if(fs.existsSync(path.join(dir, SCRATCH_2, `${name}.sb2`))) {
+			return SCRATCH_2
+		}
+	}
+
+	return SCRATCH_3
+}
+
 function getProjectsDir() {
 	var userId = Token.getUserId()
 	if(!userId) {
@@ -668,7 +713,7 @@ function getUserSpec(id, index) {
 function getFilters(type) {
 	return [
 		{name: 'KBlock(*.kbl)', extensions: ['kbl']},
-		type === "scratch2" ? {name: 'Scratch 2(*.sb2)', extensions: ['sb2']} : {name: 'Scratch 3(*.json)', extensions: ['json']}
+		type === SCRATCH_2 ? {name: 'Scratch 2(*.sb2)', extensions: ['sb2']} : {name: 'Scratch 3(*.json)', extensions: ['json']}
 	]
 }
 

@@ -198,6 +198,7 @@ function listenMessages() {
 	listenMessage("projectOpen", (type, name) => Project.open(type, name))
 	listenMessage("projectSave", (name, data, type, savePath) => Project.save(name, data, type, savePath))
 	listenMessage("projectSaveAs", (name, data, type) => Project.saveAs(name, data, type))
+	listenMessage("projectDelete", (type, name, hash) => Project.remove(type, name, hash))
 
 	listenMessage("projectSync", type => Project.sync(type))
 	listenMessage("projectList", type => Project.list(type))
@@ -205,7 +206,6 @@ function listenMessages() {
 	if(DEV) {
 		listenMessage("projectCreate", name => Project.create(name))
 		listenMessage("projectUpload", (name, hash) => Project.upload(name, hash))
-		listenMessage("projectDelete", (name, hash) => Project.remove(name, hash))
 		listenMessage("projectDownload", (name, hash) => Project.download(name, hash))
 	}
 
