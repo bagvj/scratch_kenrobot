@@ -52,7 +52,7 @@ webpackJsonp([1],{
 
 		kenrobot.viewType = "scratch3";
 		registerShortcut();
-		kenrobot.on("app", "command", onCommand).on("project", "open-by", onProjectOpenBy);
+		kenrobot.on("app", "command", onCommand).on("project", "open-by", onProjectOpenBy).on("project", "load", onProjectLoad);
 	}
 
 	function onCommand(command) {
@@ -85,17 +85,19 @@ webpackJsonp([1],{
 	}
 
 	function onOpenProject(name) {
-		kenrobot.postMessage("app:projectOpen", "scratch3", name).then(function (result) {
-			projectExtra = { path: result.path, project_name: result.project_name };
-			kenrobot.view.loadProject(result.data);
-			kenrobot.view.project = result.data;
-			kenrobot.trigger("util", "message", "打开成功");
-		}, function (err) {
+		kenrobot.postMessage("app:projectOpen", "scratch3", name).then(onProjectLoad, function (err) {
 			kenrobot.trigger("util", "message", {
 				text: "打开失败",
 				type: "error"
 			});
 		});
+	}
+
+	function onProjectLoad(project) {
+		projectExtra = { path: project.path, project_name: project.project_name };
+		kenrobot.view.loadProject(project.data);
+		kenrobot.view.project = project.data;
+		kenrobot.trigger("util", "message", "打开成功");
 	}
 
 	function onSaveProject(saveAs, saveCallback) {

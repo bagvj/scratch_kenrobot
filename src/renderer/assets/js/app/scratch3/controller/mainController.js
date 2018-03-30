@@ -3,7 +3,7 @@ define(['vendor/lodash', 'app/common/util/util', 'app/common/util/emitor', '../c
 	function init() {
 		emitor.on('app', 'start', onAppStart);
 
-		kenrobot.on('app-menu', 'do-action', onMenuAction).listenMessage("app:onBeforeQuit", onBeforeQuit);
+		kenrobot.on('app', 'ready', onAppReady).on('app-menu', 'do-action', onMenuAction).listenMessage("app:onBeforeQuit", onBeforeQuit);
 	}
 
 	function onAppStart() {
@@ -14,6 +14,12 @@ define(['vendor/lodash', 'app/common/util/util', 'app/common/util/emitor', '../c
 			for(var name in specSetting) {
 				emitor.trigger("setting", "change", name, specSetting[name]);
 			}
+		});
+	}
+
+	function onAppReady() {
+		kenrobot.postMessage("app:loadOpenOrRecentProject").then(result => {
+			kenrobot.trigger("project", "load", result);
 		});
 	}
 

@@ -10,6 +10,7 @@
       "protocol": "inspector",
       "args": [
         "-dmt",
+        "--project=C:\\Users\\yue\\Documents\\test\\768.kbl"
       ]
     }
   ]

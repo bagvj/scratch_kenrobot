@@ -53,7 +53,7 @@ define(['vendor/jquery', 'vendor/pace', 'vendor/mousetrap', 'app/common/util/uti
 			baseUrl = url;
 
 			setTimeout(() => {
-				onSwitch("scratch3");
+				onSwitch("scratch2");
 
 				//app启动后自动检查更新，并且如果检查失败或者没有更新，不提示
 				setTimeout(() => {
